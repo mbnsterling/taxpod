@@ -1,0 +1,156 @@
+---
+description: Core development guidelines for this create-t3 app (forms, tRPC, server components, data lists)
+alwaysApply: true
+---
+
+# Create T3 App Development Standards
+
+These rules guide how we structure forms, tRPC procedures, server components, and data listing UIs in this app.
+
+## Forms – Formik + Zod
+
+- **Always use Formik with Zod for form state and validation.**
+  - Define a Zod schema for every form, then derive the form values type from it.
+  - Keep schemas colocated with the form or in a nearby `schema.ts` when reused.
+- **Validation flow:**
+  - Prefer a single source of truth: the Zod schema.
+  - Use an adapter (e.g. `toFormikValidationSchema`) or a custom helper so Formik validation is powered by the Zod schema.
+  - Never duplicate validation logic manually in Formik `validate` functions if it already exists in Zod.
+- **Form patterns:**
+  - Use typed `initialValues` derived from `z.infer<typeof schema>`.
+  - Show Zod validation messages in field-level errors.
+  - On submit, always validate via Zod (client-side) before calling any tRPC mutation.
+
+```typescript
+// Example Zod schema and Formik usage
+const userFormSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+});
+
+type UserFormValues = z.infer<typeof userFormSchema>;
+
+const initialValues: UserFormValues = {
+  email: '',
+  name: '',
+};
+
+export function UserForm() {
+  return (
+    <Formik<UserFormValues>
+      initialValues={initialValues}
+      validationSchema={toFormikValidationSchema(userFormSchema)}
+      onSubmit={async (values) => {
+        await api.user.create.mutate(values);
+      }}
+    >
+      {/* form fields here */}
+    </Formik>
+  );
+}
+```
+
+## tRPC – Segmented, Modular, Model-Based
+
+- **Organize tRPC routers and procedures by model/domain.**
+  - Each major model/domain gets its own router file (e.g. `userRouter`, `invoiceRouter`, `taxRouter`).
+  - Never dump unrelated procedures into a single “misc” router.
+- **Use Zod for all input validation in tRPC.**
+  - Input schemas should live close to their router or in shared `schema` files when reused.
+  - Types for procedures should always be inferred from Zod schemas.
+- **Router design:**
+  - Keep procedures small, focused, and composable.
+  - Prefer helpers/services for complex business logic instead of bloated procedure bodies.
+  - Compose an `appRouter` from the individual routers.
+
+```typescript
+// Example segmented routers
+export const userRouter = createTRPCRouter({
+  list: protectedProcedure
+    .input(z.object({ search: z.string().optional() }))
+    .query(({ ctx, input }) => listUsers(ctx, input)),
+
+  create: protectedProcedure
+    .input(userFormSchema)
+    .mutation(({ ctx, input }) => createUser(ctx, input)),
+});
+
+export const invoiceRouter = createTRPCRouter({
+  list: protectedProcedure
+    .input(z.object({ page: z.number().min(1), pageSize: z.number().min(1).max(100) }))
+    .query(({ ctx, input }) => listInvoices(ctx, input)),
+});
+
+export const appRouter = createTRPCRouter({
+  user: userRouter,
+  invoice: invoiceRouter,
+  // ...other routers
+});
+```
+
+## Next.js Server Components – Await Params
+
+- **All Next.js server components that receive `params` must treat them as async and `await` them.**
+  - Use the pattern where `params` (and optionally `searchParams`) are `Promise<...>` and are awaited at the top of the component.
+  - Do not access `params` directly without awaiting.
+- **Pattern:**
+
+```typescript
+// Example server component with awaited params
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const user = await api.user.getById.query({ id });
+
+  return <UserDetails user={user} />;
+}
+```
+
+## Lists – TanStack + Shadcn Tables, nuqs, Debounce, Mobile Cards
+
+- **Desktop listing UIs must use TanStack Table + Shadcn UI table components.**
+  - Implement server-driven pagination, sorting, and filtering via tRPC.
+  - Configure columns and accessors using TanStack Table; render using Shadcn table primitives.
+- **Search and filters must be URL-driven with `nuqs`.**
+  - Manage search text, filter values, page, and sort state via `nuqs` (e.g. `useQueryState`, `useQueryStates`).
+  - The table’s state should be derived from query params; updating filters/search should update the URL.
+- **Debounce search on desktop.**
+  - When user types in search, debounce updates to `nuqs` and tRPC calls to reduce server load.
+  - Use a reusable debounced search hook or utility; avoid firing a request per keystroke.
+- **Mobile: optimized card layout.**
+  - On small screens, prefer card-based layouts instead of wide tables.
+  - Cards should show key fields only and be optimized for tap targets and vertical scrolling.
+
+```typescript
+// Example pattern for list with nuqs + debounce (desktop)
+const [search, setSearch] = useQueryState('q', { defaultValue: '' });
+const [page, setPage] = useQueryState('page', { defaultValue: 1 });
+const [sort, setSort] = useQueryState('sort', { defaultValue: 'createdAt.desc' });
+
+const [debouncedSearch] = useDebouncedValue(search, 300);
+
+const { data } = api.user.list.useQuery({
+  search: debouncedSearch,
+  page,
+  pageSize: 20,
+  sort,
+});
+```
+
+- **Implementation notes:**
+  - Tables:
+    - Use TanStack’s column definitions and state management.
+    - Wire table pagination and sorting events back into `nuqs` state.
+  - Filters:
+    - Each filter (status, date range, etc.) should map to its own query param.
+    - Clearing filters should reset their corresponding params.
+  - Mobile:
+    - Use a breakpoint-based conditional render: table for desktop, cards for mobile.
+    - Keep card components lean and memoized when possible.
+
+Adhering to these standards keeps forms, API boundaries, server components, and data listing UIs consistent, type-safe, and performant across the app.
+
