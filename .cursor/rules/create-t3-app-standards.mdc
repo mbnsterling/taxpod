@@ -7,22 +7,22 @@ alwaysApply: true
 
 These rules guide how we structure forms, tRPC procedures, server components, and data listing UIs in this app.
 
-## Forms – Formik + Zod
+## Forms – React Hook Form + Zod
 
-- **Always use Formik with Zod for form state and validation.**
+- **Always use React Hook Form with Zod for form state and validation.**
   - Define a Zod schema for every form, then derive the form values type from it.
   - Keep schemas colocated with the form or in a nearby `schema.ts` when reused.
 - **Validation flow:**
   - Prefer a single source of truth: the Zod schema.
-  - Use an adapter (e.g. `toFormikValidationSchema`) or a custom helper so Formik validation is powered by the Zod schema.
-  - Never duplicate validation logic manually in Formik `validate` functions if it already exists in Zod.
+  - Use `@hookform/resolvers/zod` (e.g. `zodResolver`) so React Hook Form validation is powered by the Zod schema.
+  - Never duplicate validation logic manually in custom validators if it already exists in Zod.
 - **Form patterns:**
-  - Use typed `initialValues` derived from `z.infer<typeof schema>`.
+  - Use typed form values derived from `z.infer<typeof schema>`.
   - Show Zod validation messages in field-level errors.
   - On submit, always validate via Zod (client-side) before calling any tRPC mutation.
 
 ```typescript
-// Example Zod schema and Formik usage
+// Example Zod schema and React Hook Form usage
 const userFormSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
@@ -30,22 +30,23 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
-const initialValues: UserFormValues = {
-  email: '',
-  name: '',
-};
-
 export function UserForm() {
+  const form = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      email: '',
+      name: '',
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    await api.user.create.mutate(values);
+  });
+
   return (
-    <Formik<UserFormValues>
-      initialValues={initialValues}
-      validationSchema={toFormikValidationSchema(userFormSchema)}
-      onSubmit={async (values) => {
-        await api.user.create.mutate(values);
-      }}
-    >
-      {/* form fields here */}
-    </Formik>
+    <form onSubmit={onSubmit}>
+      {/* form fields here using form.register / Controller */}
+    </form>
   );
 }
 ```

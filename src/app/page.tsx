@@ -1,9 +1,20 @@
-import { HydrateClient } from "~/trpc/server";
+import { MarketingLayout } from "~/components/marketing/layout";
+import { HeroSection } from "~/components/marketing/hero-section";
+import { StatsBar } from "~/components/marketing/stats-bar";
+import { HomepageFeaturesSection } from "~/components/marketing/homepage-features";
+import { ProcessSection } from "~/components/marketing/process-section";
+import { TestimonialsSection } from "~/components/marketing/testimonials-section";
+import { CTABanner } from "~/components/marketing/cta-banner";
 
-export default async function Home() {
+export default function Home() {
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white"></main>
-    </HydrateClient>
+    <MarketingLayout>
+      <HeroSection />
+      <StatsBar />
+      <HomepageFeaturesSection />
+      <ProcessSection />
+      <TestimonialsSection />
+      <CTABanner />
+    </MarketingLayout>
   );
 }

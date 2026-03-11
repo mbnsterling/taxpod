@@ -1,652 +1,270 @@
 {
-  "$schema": "https://design-system.schema/v2",
-  "meta": {
-    "name": "TaxEase Design System — Tailwind CSS + shadcn/ui",
-    "version": "2.0",
-    "description": "Visual design language for a Nigerian fintech/compliance SaaS landing page, fully mapped to Tailwind CSS utility classes and shadcn/ui component primitives.",
-    "stack": ["Next.js", "Tailwind CSS v3", "shadcn/ui", "framer-motion", "lucide-react"],
-    "replication_intent": "Drop this file into Cursor as context. Every token maps directly to a Tailwind class or a shadcn component. No guessing required."
-  },
+  "design_system": {
+    "name": "emerald-glass-saas",
+    "stack": {
+      "css_framework": "tailwindcss",
+      "component_library": "shadcn-ui",
+      "animation_library": "framer-motion",
+      "icon_library": "lucide-react"
+    },
 
-  "tailwind_config": {
-    "notes": "Extend the default Tailwind config with these custom tokens in tailwind.config.ts. This makes all custom colors available as standard Tailwind classes (e.g. bg-primary, text-accent).",
-    "file": "tailwind.config.ts",
-    "config": {
-      "theme": {
-        "extend": {
-          "colors": {
-            "primary": {
-              "DEFAULT": "#1E4D35",
-              "dark": "#1B3A2D",
-              "mid": "#2D6A4F",
-              "light": "#52B788",
-              "foreground": "#FFFFFF"
-            },
-            "accent": {
-              "DEFAULT": "#22C55E",
-              "soft": "#4ADE80",
-              "foreground": "#166534"
-            },
-            "brand-bg": "#F2F5F2",
-            "brand-bg-alt": "#EBF0EB",
-            "brand-badge-bg": "#E6F4ED",
-            "brand-badge-text": "#166534"
-          },
-          "fontFamily": {
-            "sans": ["Plus Jakarta Sans", "DM Sans", "system-ui", "sans-serif"]
-          },
-          "borderRadius": {
-            "card": "16px",
-            "badge": "9999px",
-            "icon": "10px",
-            "cta": "24px"
-          },
-          "boxShadow": {
-            "card": "0 2px 8px rgba(0,0,0,0.06)",
-            "card-hover": "0 8px 24px rgba(0,0,0,0.10)",
-            "btn-primary": "0 4px 12px rgba(30,77,53,0.30)",
-            "btn-primary-hover": "0 6px 18px rgba(30,77,53,0.40)"
-          },
-          "keyframes": {
-            "fade-up": {
-              "0%": { "opacity": "0", "transform": "translateY(24px)" },
-              "100%": { "opacity": "1", "transform": "translateY(0)" }
-            },
-            "fade-in": {
-              "0%": { "opacity": "0" },
-              "100%": { "opacity": "1" }
-            },
-            "scale-in": {
-              "0%": { "opacity": "0", "transform": "scale(0.95)" },
-              "100%": { "opacity": "1", "transform": "scale(1)" }
-            }
-          },
-          "animation": {
-            "fade-up": "fade-up 0.5s cubic-bezier(0.25,0.46,0.45,0.94) forwards",
-            "fade-in": "fade-in 0.6s ease forwards",
-            "scale-in": "scale-in 0.5s cubic-bezier(0.25,0.46,0.45,0.94) forwards"
-          }
+    "layout": {
+      "container": {
+        "max_width": "1200px",
+        "padding_x": "px-6",
+        "center": true
+      },
+      "sections": {
+        "padding_y": ["py-20", "py-24", "py-32"],
+        "max_content_width": "max-w-7xl",
+        "center": "mx-auto"
+      },
+      "grid_patterns": {
+        "hero": "grid lg:grid-cols-2 gap-16 items-center",
+        "features": "grid md:grid-cols-2 lg:grid-cols-3 gap-8",
+        "stats": "grid md:grid-cols-4 gap-8",
+        "testimonials": "grid md:grid-cols-3 gap-8",
+        "steps": "grid md:grid-cols-3 gap-10"
+      }
+    },
+
+    "typography": {
+      "font_family": "font-sans",
+      "weights": {
+        "regular": "font-medium",
+        "bold": "font-bold",
+        "extra_bold": "font-extrabold",
+        "black": "font-black"
+      },
+      "sizes": {
+        "hero": ["text-5xl", "md:text-7xl"],
+        "section_title": ["text-3xl", "md:text-4xl"],
+        "card_title": "text-xl",
+        "body": "text-base",
+        "small": "text-sm"
+      }
+    },
+
+    "colors": {
+      "background": {
+        "primary": "#F8FAFC"
+      },
+      "brand": {
+        "primary": "emerald",
+        "shades": [
+          "emerald-400",
+          "emerald-500",
+          "emerald-600",
+          "emerald-800",
+          "emerald-900"
+        ]
+      },
+      "text": {
+        "primary": "slate-900",
+        "secondary": "slate-600",
+        "muted": "slate-400"
+      },
+      "icon_gradients": {
+        "blue": ["from-blue-500", "to-cyan-500"],
+        "orange": ["from-orange-500", "to-amber-500"],
+        "pink": ["from-pink-500", "to-rose-500"],
+        "purple": ["from-purple-500", "to-indigo-500"]
+      }
+    },
+
+    "background_effects": {
+      "ambient_blobs": [
+        {
+          "position": "top-left",
+          "size": "40%",
+          "color": "bg-emerald-200",
+          "blur": "blur-[120px]",
+          "opacity": "opacity-30"
+        },
+        {
+          "position": "bottom-right",
+          "size": "40%",
+          "color": "bg-blue-200",
+          "blur": "blur-[100px]",
+          "opacity": "opacity-20"
+        },
+        {
+          "position": "top-right",
+          "size": "30%",
+          "color": "bg-amber-100",
+          "blur": "blur-[150px]",
+          "opacity": "opacity-10"
         }
-      }
-    },
-    "globals_css": {
-      "file": "globals.css",
-      "notes": "shadcn/ui uses CSS variables in :root for its theming. Map the brand palette here so shadcn components inherit the right colors automatically.",
-      "light_theme": {
-        "--background": "0 0% 95%",
-        "--foreground": "220 13% 7%",
-        "--card": "0 0% 100%",
-        "--card-foreground": "220 13% 7%",
-        "--primary": "152 43% 21%",
-        "--primary-foreground": "0 0% 100%",
-        "--secondary": "152 15% 94%",
-        "--secondary-foreground": "152 43% 21%",
-        "--muted": "152 10% 94%",
-        "--muted-foreground": "220 9% 46%",
-        "--accent": "142 71% 45%",
-        "--accent-foreground": "152 60% 15%",
-        "--destructive": "0 84% 60%",
-        "--destructive-foreground": "0 0% 100%",
-        "--border": "220 13% 91%",
-        "--input": "220 13% 91%",
-        "--ring": "152 43% 21%",
-        "--radius": "0.625rem"
-      },
-      "note": "Run `npx shadcn@latest init` then replace the generated :root values with these to apply the brand palette globally to all shadcn components."
-    }
-  },
-
-  "colors": {
-    "notes": "Every color token maps to both its hex value AND the corresponding Tailwind class. Always use the Tailwind class in code.",
-    "palette": {
-      "primary_dark":    { "hex": "#1B3A2D", "tw_bg": "bg-primary-dark",    "tw_text": "text-primary-dark"   },
-      "primary":         { "hex": "#1E4D35", "tw_bg": "bg-primary",          "tw_text": "text-primary"         },
-      "primary_mid":     { "hex": "#2D6A4F", "tw_bg": "bg-primary-mid",      "tw_text": "text-primary-mid"     },
-      "primary_light":   { "hex": "#52B788", "tw_bg": "bg-primary-light",    "tw_text": "text-primary-light"   },
-      "accent":          { "hex": "#22C55E", "tw_bg": "bg-accent",           "tw_text": "text-accent"          },
-      "accent_soft":     { "hex": "#4ADE80", "tw_bg": "bg-accent-soft",      "tw_text": "text-accent-soft"     },
-      "page_bg":         { "hex": "#F2F5F2", "tw_bg": "bg-brand-bg",         "tw_text": "text-brand-bg"        },
-      "section_alt_bg":  { "hex": "#EBF0EB", "tw_bg": "bg-brand-bg-alt",     "tw_text": "text-brand-bg-alt"    },
-      "card_bg":         { "hex": "#FFFFFF", "tw_bg": "bg-white",            "tw_text": "text-white"           },
-      "text_primary":    { "hex": "#111827", "tw_bg": "bg-gray-900",         "tw_text": "text-gray-900"        },
-      "text_secondary":  { "hex": "#4B5563", "tw_bg": "bg-gray-600",         "tw_text": "text-gray-600"        },
-      "text_muted":      { "hex": "#9CA3AF", "tw_bg": "bg-gray-400",         "tw_text": "text-gray-400"        },
-      "border":          { "hex": "#E5E7EB", "tw_border": "border-gray-200"                                    },
-      "badge_bg":        { "hex": "#E6F4ED", "tw_bg": "bg-brand-badge-bg",   "tw_text": "text-brand-badge-text"},
-      "icon_blue":       { "hex": "#3B82F6", "tw_bg": "bg-blue-500",         "tw_container_bg": "bg-blue-50"  },
-      "icon_orange":     { "hex": "#F97316", "tw_bg": "bg-orange-500",       "tw_container_bg": "bg-orange-50"},
-      "icon_pink":       { "hex": "#EC4899", "tw_bg": "bg-pink-500",         "tw_container_bg": "bg-pink-50"  },
-      "icon_purple":     { "hex": "#8B5CF6", "tw_bg": "bg-violet-500",       "tw_container_bg": "bg-violet-50"},
-      "icon_green":      { "hex": "#22C55E", "tw_bg": "bg-green-500",        "tw_container_bg": "bg-green-50" }
-    }
-  },
-
-  "typography": {
-    "notes": "Font loaded via next/font or Google Fonts link. All type styles map to Tailwind text utilities.",
-    "font_setup": {
-      "google_fonts_import": "@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap');",
-      "next_font_snippet": "import { Plus_Jakarta_Sans } from 'next/font/google';\nexport const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-sans' });",
-      "tailwind_class": "font-sans"
-    },
-    "scale": {
-      "hero_headline": {
-        "tailwind": "text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight text-gray-900",
-        "note": "Use responsive text scale. Split into two lines — second line uses italic + text-accent"
-      },
-      "hero_headline_italic_accent": {
-        "tailwind": "italic text-accent",
-        "note": "Apply to a <span> wrapping the second headline line. e.g. <span className='italic text-accent'>without stress.</span>"
-      },
-      "section_eyebrow": {
-        "tailwind": "text-[11px] font-semibold tracking-[0.12em] uppercase text-accent",
-        "note": "Render as a <p> or <span> above the section headline"
-      },
-      "section_headline": {
-        "tailwind": "text-3xl md:text-4xl lg:text-[40px] font-bold leading-[1.15] tracking-tight text-gray-900"
-      },
-      "section_subheading": {
-        "tailwind": "text-[15px] font-normal leading-relaxed text-gray-600 max-w-[480px]"
-      },
-      "card_title": {
-        "tailwind": "text-base font-semibold leading-snug text-gray-900"
-      },
-      "card_body": {
-        "tailwind": "text-sm font-normal leading-relaxed text-gray-600"
-      },
-      "stat_number": {
-        "tailwind": "text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900"
-      },
-      "stat_label": {
-        "tailwind": "text-[11px] font-medium tracking-[0.06em] uppercase text-gray-400"
-      },
-      "nav_link": {
-        "tailwind": "text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-150"
-      },
-      "button_label": {
-        "tailwind": "text-sm font-semibold tracking-[0.01em]"
-      },
-      "link_cta": {
-        "tailwind": "text-[13px] font-semibold text-primary hover:text-primary-mid no-underline inline-flex items-center gap-1 transition-colors duration-150",
-        "note": "Used for 'Learn more →' inline card links"
-      },
-      "step_number": {
-        "tailwind": "text-5xl md:text-6xl font-extrabold text-accent opacity-25",
-        "note": "Large decorative 01/02/03 numerals"
-      },
-      "testimonial_quote": {
-        "tailwind": "text-sm font-normal leading-[1.7] text-gray-600"
-      },
-      "testimonial_name": {
-        "tailwind": "text-[13px] font-semibold text-gray-900"
-      },
-      "testimonial_role": {
-        "tailwind": "text-xs font-normal text-gray-400"
-      }
-    }
-  },
-
-  "spacing": {
-    "notes": "All spacing uses Tailwind's default scale (base 4px). Section padding uses responsive py utilities.",
-    "section_wrapper": "py-16 md:py-20 lg:py-24 px-4 md:px-8 lg:px-12",
-    "container": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-    "card_padding": {
-      "default": "p-6",
-      "large": "p-8",
-      "compact": "px-5 py-4"
-    },
-    "grid_gap": {
-      "cards": "gap-5",
-      "stats": "gap-8 md:gap-12",
-      "section_inner": "gap-3",
-      "nav_items": "gap-8"
-    },
-    "common_margins": {
-      "eyebrow_to_headline": "mb-2",
-      "headline_to_subtext": "mb-3",
-      "subtext_to_content": "mb-10 md:mb-12",
-      "section_header_to_grid": "mt-10 md:mt-12"
-    }
-  },
-
-  "border_radius": {
-    "notes": "Using Tailwind built-ins plus custom 'card', 'badge', 'icon', 'cta' values from tailwind.config.ts",
-    "usage": {
-      "button_primary": "rounded-[10px]",
-      "button_secondary": "rounded-[10px]",
-      "card": "rounded-card (16px)",
-      "badge_pill": "rounded-badge (9999px)",
-      "icon_container": "rounded-icon (10px)",
-      "cta_section": "rounded-cta (24px)",
-      "avatar": "rounded-full",
-      "input": "rounded-[10px]",
-      "nav": "rounded-none",
-      "hero_widget": "rounded-2xl"
-    }
-  },
-
-  "shadows": {
-    "notes": "Custom shadow tokens registered in tailwind.config.ts under theme.extend.boxShadow",
-    "usage": {
-      "card_default": "shadow-card",
-      "card_hover": "shadow-card-hover",
-      "button_primary": "shadow-btn-primary",
-      "button_primary_hover": "shadow-btn-primary-hover",
-      "nav": "shadow-sm",
-      "hero_widget": "shadow-xl"
-    }
-  },
-
-  "shadcn_components": {
-    "setup": {
-      "install": "npx shadcn@latest init",
-      "add_components": "npx shadcn@latest add button badge card avatar separator navigation-menu"
-    },
-    "component_map": {
-      "Button": {
-        "shadcn_component": "Button",
-        "import": "import { Button } from '@/components/ui/button'",
-        "variants": {
-          "primary": {
-            "usage": "Main CTA — 'Start Filing Free', 'Get Started Now'",
-            "jsx": "<Button className='bg-primary hover:bg-primary-dark text-white font-semibold rounded-[10px] px-6 py-3 shadow-btn-primary hover:shadow-btn-primary-hover hover:-translate-y-px transition-all duration-200'>Start Filing Free →</Button>",
-            "shadcn_variant": "default",
-            "tailwind_overrides": "bg-primary hover:bg-primary-dark shadow-btn-primary hover:shadow-btn-primary-hover hover:-translate-y-px transition-all duration-200"
-          },
-          "ghost": {
-            "usage": "Secondary CTA — 'Watch Demo'",
-            "jsx": "<Button variant='ghost' className='text-gray-700 hover:text-primary font-medium'>Watch Demo</Button>",
-            "shadcn_variant": "ghost"
-          },
-          "outline_white": {
-            "usage": "Inside dark featured card — 'Talk to Sales'",
-            "jsx": "<Button variant='outline' className='border-white/50 text-white bg-transparent hover:bg-white/10 rounded-[10px]'>Talk to Sales</Button>",
-            "shadcn_variant": "outline",
-            "tailwind_overrides": "border-white/50 text-white bg-transparent hover:bg-white/10"
-          },
-          "cta_banner": {
-            "usage": "Final CTA on dark banner — 'Get Started Now'",
-            "jsx": "<Button className='bg-white text-primary-dark hover:bg-gray-100 font-semibold rounded-[10px] px-8 py-3'>Get Started Now →</Button>",
-            "shadcn_variant": "default",
-            "tailwind_overrides": "bg-white text-primary-dark hover:bg-gray-100"
-          }
-        }
-      },
-
-      "Badge": {
-        "shadcn_component": "Badge",
-        "import": "import { Badge } from '@/components/ui/badge'",
-        "variants": {
-          "compliance_pill": {
-            "usage": "Hero eyebrow badge — 'NIGERIA TAX ACT 2025 READY'",
-            "jsx": "<Badge className='bg-brand-badge-bg text-brand-badge-text border border-accent/20 rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.04em] uppercase'>NIGERIA TAX ACT 2025 READY</Badge>",
-            "shadcn_variant": "outline",
-            "tailwind_overrides": "bg-brand-badge-bg text-brand-badge-text border-accent/20 rounded-full"
-          },
-          "secure_badge": {
-            "usage": "Hero widget trust label — 'Verified 100% Secure'",
-            "jsx": "<Badge className='bg-green-50 text-green-700 border-0 text-xs font-medium'>✓ Verified 100% Secure</Badge>"
-          }
-        }
-      },
-
-      "Card": {
-        "shadcn_component": "Card + CardHeader + CardContent",
-        "import": "import { Card, CardHeader, CardContent } from '@/components/ui/card'",
-        "variants": {
-          "feature_card": {
-            "usage": "Capabilities section — each feature tile",
-            "jsx": "<Card className='bg-white border border-gray-200/60 rounded-card shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200 cursor-default'><CardContent className='p-6'>{children}</CardContent></Card>",
-            "tailwind_overrides": "rounded-card shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200"
-          },
-          "featured_dark_card": {
-            "usage": "Enterprise CTA card breaking the grid in features section",
-            "jsx": "<Card className='bg-primary-dark border-0 rounded-card text-white'><CardContent className='p-8 flex flex-col gap-4'>{children}</CardContent></Card>",
-            "tailwind_overrides": "bg-primary-dark border-0 text-white"
-          },
-          "testimonial_card": {
-            "usage": "Social proof section — each review tile",
-            "jsx": "<Card className='bg-white border border-gray-200/60 rounded-card shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200'><CardContent className='p-6 flex flex-col gap-4'>{children}</CardContent></Card>"
-          },
-          "hero_widget": {
-            "usage": "Floating product preview card in the hero right column",
-            "jsx": "<Card className='bg-white rounded-2xl shadow-xl border border-gray-100 p-5'>{children}</Card>"
-          },
-          "stat_card": {
-            "usage": "Individual stat item in the social proof bar",
-            "jsx": "<div className='flex flex-col items-center gap-1 px-6 py-4 border-r border-gray-200 last:border-r-0'>{children}</div>",
-            "note": "This is a plain div, not a shadcn Card — the stat bar is a flex row of borderless items"
-          }
-        }
-      },
-
-      "Avatar": {
-        "shadcn_component": "Avatar + AvatarImage + AvatarFallback",
-        "import": "import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'",
-        "usage": "Testimonial author avatars",
-        "jsx": "<Avatar className='h-9 w-9'><AvatarImage src={src} /><AvatarFallback className='bg-primary-light text-white text-xs font-semibold'>{initials}</AvatarFallback></Avatar>",
-        "size_class": "h-9 w-9"
-      },
-
-      "Separator": {
-        "shadcn_component": "Separator",
-        "import": "import { Separator } from '@/components/ui/separator'",
-        "usage": "Dividers between footer columns, or between stat items on mobile",
-        "jsx": "<Separator className='bg-gray-200' />"
-      },
-
-      "NavigationMenu": {
-        "shadcn_component": "NavigationMenu",
-        "import": "import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from '@/components/ui/navigation-menu'",
-        "usage": "Desktop navbar links",
-        "tailwind_overrides": "text-sm font-medium text-gray-600 hover:text-primary"
-      }
-    }
-  },
-
-  "layout_classes": {
-    "notes": "Exact Tailwind class strings for every major layout pattern in the page.",
-    "page_wrapper": "min-h-screen bg-brand-bg font-sans",
-    "section_container": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-
-    "navbar": {
-      "outer": "sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-md border-b border-gray-200 h-16",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between",
-      "logo_icon": "w-8 h-8 bg-primary rounded-lg flex items-center justify-center",
-      "logo_text": "font-bold text-gray-900 text-base ml-2",
-      "nav_links": "hidden md:flex items-center gap-8",
-      "nav_link": "text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-150",
-      "actions": "flex items-center gap-3"
-    },
-
-    "hero": {
-      "section": "py-16 md:py-24 lg:py-32 bg-brand-bg",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-12 items-center",
-      "text_col": "flex flex-col gap-5",
-      "badge_row": "flex items-center gap-2",
-      "headline": "text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-gray-900",
-      "headline_accent": "italic text-accent block",
-      "sub_copy": "text-base text-gray-600 leading-relaxed max-w-md",
-      "cta_row": "flex items-center gap-4 flex-wrap",
-      "widget_col": "hidden lg:flex justify-end"
-    },
-
-    "stats_bar": {
-      "section": "bg-white border-y border-gray-200 py-6",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200",
-      "stat_item": "flex flex-col items-center justify-center gap-1 py-2 px-4",
-      "stat_number": "text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900",
-      "stat_label": "text-[11px] font-medium tracking-[0.06em] uppercase text-gray-400 text-center"
-    },
-
-    "features": {
-      "section": "py-16 md:py-24 bg-brand-bg",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-      "header": "flex flex-col items-center text-center gap-2 mb-12",
-      "grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5",
-      "bottom_row": "grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-5 mt-5",
-      "icon_container": "w-10 h-10 rounded-icon flex items-center justify-center mb-4",
-      "card_link": "text-[13px] font-semibold text-primary hover:text-primary-mid inline-flex items-center gap-1 mt-3 transition-colors"
-    },
-
-    "process": {
-      "section": "py-16 md:py-24 bg-white",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-      "header": "flex flex-col items-center text-center gap-2 mb-12",
-      "grid": "grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12",
-      "step": "flex flex-col gap-3",
-      "step_number": "text-5xl md:text-6xl font-extrabold text-accent opacity-25 leading-none",
-      "step_title": "text-base font-semibold text-gray-900",
-      "step_desc": "text-sm text-gray-600 leading-relaxed"
-    },
-
-    "testimonials": {
-      "section": "py-16 md:py-24 bg-brand-bg",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-      "header": "flex items-center justify-between mb-10",
-      "header_text": "flex flex-col gap-2",
-      "grid": "grid grid-cols-1 md:grid-cols-3 gap-5",
-      "stars": "flex items-center gap-0.5 mb-3",
-      "star": "text-accent",
-      "author_row": "flex items-center gap-3 mt-4"
-    },
-
-    "cta_banner": {
-      "section": "py-16 md:py-24 bg-brand-bg",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-      "card": "bg-primary-dark rounded-cta px-8 py-16 md:py-20 flex flex-col items-center text-center gap-5",
-      "headline": "text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-[1.15] tracking-tight max-w-xl",
-      "subtext": "text-base text-white/70 max-w-md leading-relaxed",
-      "trust_row": "flex items-center gap-5 mt-1 text-xs text-white/50 font-medium"
-    },
-
-    "footer": {
-      "section": "bg-brand-bg border-t border-gray-200 pt-12 pb-8",
-      "inner": "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-      "grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10 mb-10",
-      "brand_col": "flex flex-col gap-4",
-      "brand_desc": "text-sm text-gray-600 leading-relaxed max-w-xs",
-      "social_row": "flex items-center gap-3 mt-1",
-      "link_col_title": "text-xs font-semibold uppercase tracking-[0.08em] text-gray-900 mb-3",
-      "link_col_link": "text-sm text-gray-600 hover:text-primary transition-colors block mb-2",
-      "bottom_bar": "border-t border-gray-200 pt-6 flex items-center justify-between text-xs text-gray-400"
-    }
-  },
-
-  "icon_system": {
-    "library": "lucide-react",
-    "install": "npm install lucide-react",
-    "import": "import { Calculator, FileText, Bell, FilePdf, ArrowRight } from 'lucide-react'",
-    "container_pattern": {
-      "tailwind": "w-10 h-10 rounded-icon flex items-center justify-center",
-      "color_variants": {
-        "blue":   "bg-blue-50 text-blue-500",
-        "orange": "bg-orange-50 text-orange-500",
-        "pink":   "bg-pink-50 text-pink-500",
-        "purple": "bg-violet-50 text-violet-500",
-        "green":  "bg-green-50 text-green-500"
-      },
-      "icon_size": "w-5 h-5"
-    }
-  },
-
-  "animation": {
-    "library": "framer-motion",
-    "install": "npm install framer-motion",
-    "philosophy": "Scroll-triggered entrances. Nothing decorative without purpose. Cards stagger in. Hero elements cascade on load.",
-
-    "motion_variants": {
-      "fadeUpEnter": {
-        "hidden": { "opacity": 0, "y": 24 },
-        "visible": { "opacity": 1, "y": 0, "transition": { "duration": 0.5, "ease": [0.25, 0.46, 0.45, 0.94] } }
-      },
-      "fadeIn": {
-        "hidden": { "opacity": 0 },
-        "visible": { "opacity": 1, "transition": { "duration": 0.6 } }
-      },
-      "scaleIn": {
-        "hidden": { "opacity": 0, "scale": 0.95 },
-        "visible": { "opacity": 1, "scale": 1, "transition": { "duration": 0.5, "ease": [0.25, 0.46, 0.45, 0.94] } }
-      },
-      "staggerContainer": {
-        "hidden": {},
-        "visible": { "transition": { "staggerChildren": 0.09, "delayChildren": 0.05 } }
-      },
-      "slideInLeft": {
-        "hidden": { "opacity": 0, "x": -32 },
-        "visible": { "opacity": 1, "x": 0, "transition": { "duration": 0.5, "ease": [0.25, 0.46, 0.45, 0.94] } }
-      },
-      "slideInRight": {
-        "hidden": { "opacity": 0, "x": 32 },
-        "visible": { "opacity": 1, "x": 0, "transition": { "duration": 0.6, "ease": [0.25, 0.46, 0.45, 0.94] } }
-      }
-    },
-
-    "scroll_trigger_config": {
-      "viewport": { "once": true, "margin": "-80px 0px" },
-      "note": "Use whileInView on motion.div wrappers with the viewport config above. All animations fire once."
-    },
-
-    "section_animation_map": {
-      "hero": {
-        "badge":             { "variant": "fadeIn",       "delay": 0    },
-        "headline_line_1":   { "variant": "fadeUpEnter",  "delay": 0.1  },
-        "headline_italic":   { "variant": "fadeUpEnter",  "delay": 0.2  },
-        "sub_copy":          { "variant": "fadeUpEnter",  "delay": 0.3  },
-        "cta_buttons":       { "variant": "fadeUpEnter",  "delay": 0.4  },
-        "hero_widget":       { "variant": "slideInRight", "delay": 0.3  }
-      },
-      "stats_bar": {
-        "wrapper":   { "variant": "staggerContainer" },
-        "each_stat": { "variant": "fadeUpEnter", "stagger": 0.1 }
-      },
-      "features": {
-        "eyebrow":       { "variant": "fadeIn",       "delay": 0   },
-        "headline":      { "variant": "fadeUpEnter",  "delay": 0.1 },
-        "subtext":       { "variant": "fadeUpEnter",  "delay": 0.2 },
-        "grid":          { "variant": "staggerContainer" },
-        "each_card":     { "variant": "scaleIn",      "stagger": 0.08 },
-        "featured_card": { "variant": "scaleIn",      "delay": 0.3 }
-      },
-      "process": {
-        "eyebrow":    { "variant": "fadeIn",       "delay": 0    },
-        "headline":   { "variant": "fadeUpEnter",  "delay": 0.1  },
-        "steps":      { "variant": "staggerContainer" },
-        "each_step":  { "variant": "fadeUpEnter",  "stagger": 0.15 },
-        "step_num":   { "variant": "scaleIn", "transition": { "type": "spring", "stiffness": 120, "damping": 12 } }
-      },
-      "testimonials": {
-        "headline":   { "variant": "fadeUpEnter", "delay": 0    },
-        "grid":       { "variant": "staggerContainer" },
-        "each_card":  { "variant": "fadeUpEnter", "stagger": 0.1 }
-      },
-      "cta_banner": {
-        "container":  { "variant": "scaleIn",      "delay": 0    },
-        "headline":   { "variant": "fadeUpEnter",  "delay": 0.15 },
-        "subtext":    { "variant": "fadeUpEnter",  "delay": 0.25 },
-        "button":     { "variant": "fadeUpEnter",  "delay": 0.35 }
-      }
-    },
-
-    "hover_interactions": {
-      "feature_card":     { "whileHover": { "y": -4 }, "transition": { "duration": 0.2 } },
-      "testimonial_card": { "whileHover": { "y": -3 }, "transition": { "duration": 0.2 } },
-      "button_primary":   { "whileHover": { "y": -1, "scale": 1.01 }, "whileTap": { "scale": 0.98 }, "transition": { "duration": 0.15 } }
-    },
-
-    "reusable_components": {
-      "ScrollReveal": {
-        "description": "Drop-in scroll reveal wrapper. Wrap any JSX block to animate it into view.",
-        "file": "components/ui/scroll-reveal.tsx",
-        "code": "import { motion, useInView } from 'framer-motion';\nimport { useRef } from 'react';\nimport { cn } from '@/lib/utils';\n\nconst variants = {\n  hidden: { opacity: 0, y: 24 },\n  visible: (delay: number = 0) => ({\n    opacity: 1, y: 0,\n    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94], delay }\n  })\n};\n\ninterface ScrollRevealProps {\n  children: React.ReactNode;\n  delay?: number;\n  className?: string;\n}\n\nexport function ScrollReveal({ children, delay = 0, className }: ScrollRevealProps) {\n  const ref = useRef(null);\n  const inView = useInView(ref, { once: true, margin: '-80px 0px' });\n  return (\n    <motion.div\n      ref={ref}\n      className={cn(className)}\n      variants={variants}\n      initial='hidden'\n      animate={inView ? 'visible' : 'hidden'}\n      custom={delay}\n    >\n      {children}\n    </motion.div>\n  );\n}"
-      },
-      "StaggerGrid": {
-        "description": "Wraps a card grid and staggers child entrances on scroll.",
-        "file": "components/ui/stagger-grid.tsx",
-        "code": "import { motion, useInView } from 'framer-motion';\nimport { useRef } from 'react';\nimport { cn } from '@/lib/utils';\n\nconst container = {\n  hidden: {},\n  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } }\n};\nconst item = {\n  hidden: { opacity: 0, scale: 0.95, y: 16 },\n  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] } }\n};\n\nexport function StaggerGrid({ children, className }: { children: React.ReactNode; className?: string }) {\n  const ref = useRef(null);\n  const inView = useInView(ref, { once: true, margin: '-80px 0px' });\n  return (\n    <motion.div ref={ref} className={cn(className)} variants={container} initial='hidden' animate={inView ? 'visible' : 'hidden'}>\n      {React.Children.map(children, child => (\n        <motion.div variants={item}>{child}</motion.div>\n      ))}\n    </motion.div>\n  );\n}"
-      }
-    }
-  },
-
-  "component_recipes": {
-    "notes": "Full JSX patterns for each major page component, using shadcn primitives + Tailwind classes + framer-motion.",
-
-    "FeatureCard": {
-      "description": "Feature grid tile with icon, title, description, and learn more link",
-      "jsx": "<ScrollReveal>\n  <Card className='bg-white border border-gray-200/60 rounded-card shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200'>\n    <CardContent className='p-6'>\n      <div className='w-10 h-10 rounded-icon bg-blue-50 flex items-center justify-center mb-4'>\n        <Calculator className='w-5 h-5 text-blue-500' />\n      </div>\n      <h3 className='text-base font-semibold text-gray-900 mb-2'>Smart Tax Calculator</h3>\n      <p className='text-sm text-gray-600 leading-relaxed'>Automatically computes your PIT or CIT with all eligible deductions applied.</p>\n      <a href='#' className='text-[13px] font-semibold text-primary hover:text-primary-mid inline-flex items-center gap-1 mt-3 transition-colors'>\n        Learn more <ArrowRight className='w-3 h-3' />\n      </a>\n    </CardContent>\n  </Card>\n</ScrollReveal>"
-    },
-
-    "TestimonialCard": {
-      "description": "Social proof card with stars, quote, and author row",
-      "jsx": "<Card className='bg-white border border-gray-200/60 rounded-card shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200'>\n  <CardContent className='p-6'>\n    <div className='flex gap-0.5 mb-3'>\n      {[...Array(5)].map((_, i) => <Star key={i} className='w-3.5 h-3.5 fill-accent text-accent' />)}\n    </div>\n    <p className='text-sm text-gray-600 leading-[1.7]'>&ldquo;TaxEase made it so simple — I filed my return in 20 minutes!&rdquo;</p>\n    <div className='flex items-center gap-3 mt-4'>\n      <Avatar className='h-9 w-9'>\n        <AvatarFallback className='bg-primary-light text-white text-xs font-semibold'>DA</AvatarFallback>\n      </Avatar>\n      <div>\n        <p className='text-[13px] font-semibold text-gray-900'>Chioma A.</p>\n        <p className='text-xs text-gray-400'>Fashion Designer, Lagos</p>\n      </div>\n    </div>\n  </CardContent>\n</Card>"
-    },
-
-    "SectionHeader": {
-      "description": "Reusable centered section header: eyebrow + headline + subtext",
-      "jsx": "<ScrollReveal className='flex flex-col items-center text-center gap-2 mb-12'>\n  <span className='text-[11px] font-semibold tracking-[0.12em] uppercase text-accent'>Capabilities</span>\n  <h2 className='text-3xl md:text-4xl font-bold leading-[1.15] tracking-tight text-gray-900 max-w-lg'>Everything you need to stay compliant</h2>\n  <p className='text-[15px] text-gray-600 leading-relaxed max-w-[480px]'>Built for the modern Nigerian economy. Simple for small shops, powerful for tech startups.</p>\n</ScrollReveal>"
-    },
-
-    "ProcessStep": {
-      "description": "Numbered step in the 3-step process section",
-      "jsx": "<ScrollReveal delay={0.1}>\n  <div className='flex flex-col gap-3'>\n    <span className='text-5xl font-extrabold text-accent opacity-25 leading-none'>01</span>\n    <h3 className='text-base font-semibold text-gray-900'>Tell us about yourself</h3>\n    <p className='text-sm text-gray-600 leading-relaxed'>Enter your business type, enter your TIN, and set up your profile in under 2 minutes.</p>\n  </div>\n</ScrollReveal>"
-    },
-
-    "CTABanner": {
-      "description": "Full-width dark green conversion banner",
-      "jsx": "<section className='py-16 md:py-24 bg-brand-bg'>\n  <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'>\n    <ScrollReveal>\n      <div className='bg-primary-dark rounded-cta px-8 py-16 md:py-20 flex flex-col items-center text-center gap-5'>\n        <h2 className='text-3xl md:text-5xl font-bold text-white leading-[1.15] tracking-tight max-w-xl'>Join the future of<br/>Nigerian tax filing.</h2>\n        <p className='text-base text-white/70 max-w-md leading-relaxed'>Takes less than 5 minutes to set up your profile.</p>\n        <Button className='bg-white text-primary-dark hover:bg-gray-100 font-semibold rounded-[10px] px-8 py-3 mt-2'>Get Started Now →</Button>\n        <div className='flex items-center gap-5 text-xs text-white/50 font-medium'>\n          <span>✓ No credit card</span>\n          <span>✓ Cancel anytime</span>\n        </div>\n      </div>\n    </ScrollReveal>\n  </div>\n</section>"
-    }
-  },
-
-  "design_patterns": {
-    "contrast_breaks": {
-      "description": "Deliberate bg alternation guides eye through the page. Defined in Tailwind.",
-      "sequence": [
-        { "section": "Navbar",        "class": "bg-brand-bg/90 backdrop-blur-md" },
-        { "section": "Hero",          "class": "bg-brand-bg" },
-        { "section": "Stats Bar",     "class": "bg-white border-y border-gray-200" },
-        { "section": "Features",      "class": "bg-brand-bg" },
-        { "section": "Process",       "class": "bg-white" },
-        { "section": "Testimonials",  "class": "bg-brand-bg" },
-        { "section": "CTA Banner",    "class": "bg-brand-bg (card inside is bg-primary-dark)" },
-        { "section": "Footer",        "class": "bg-brand-bg border-t border-gray-200" }
       ]
     },
-    "section_anatomy": [
-      "1. <span> eyebrow — text-[11px] font-semibold tracking-[0.12em] uppercase text-accent",
-      "2. <h2> section headline — text-3xl md:text-4xl font-bold tracking-tight text-gray-900",
-      "3. <p> subtext — text-[15px] text-gray-600 max-w-[480px]",
-      "4. Grid / flex content area",
-      "5. Optional CTA link or button at bottom"
-    ],
-    "trust_signals": {
-      "hero":          "Badge pill (compliance) + hero widget (verified badge + naira amount)",
-      "stats_bar":     "4 proof numbers with icons — 10k+ users, ₦0K transfers, 98% accuracy, 4.8/5 rating",
-      "testimonials":  "Real names, city attribution, star ratings",
-      "cta_banner":    "'No credit card · Cancel anytime' below the button"
+
+    "glassmorphism": {
+      "card_background": "bg-white/60",
+      "blur": "backdrop-blur-xl",
+      "border": "border border-white/40",
+      "shadow": "shadow-[0_8px_32px_rgba(31,38,135,0.07)]"
+    },
+
+    "radius": {
+      "card": "rounded-3xl",
+      "large_card": "rounded-[2.5rem]",
+      "button": "rounded-xl",
+      "icon": "rounded-xl"
+    },
+
+    "shadows": {
+      "soft": "shadow-sm",
+      "card": "shadow-[0_8px_32px_rgba(31,38,135,0.07)]"
+    },
+
+    "buttons": {
+      "primary": {
+        "base": "bg-emerald-800 text-white",
+        "hover": "hover:bg-emerald-900",
+        "radius": "rounded-xl",
+        "padding": "px-6 py-3",
+        "font": "font-bold"
+      },
+      "secondary": {
+        "base": "bg-white text-slate-900 border border-slate-200",
+        "hover": "hover:bg-slate-50",
+        "radius": "rounded-xl",
+        "padding": "px-6 py-3",
+        "font": "font-bold"
+      }
+    },
+
+    "cards": {
+      "base": "rounded-3xl border bg-white/60 backdrop-blur-xl border-white/40 shadow-[0_8px_32px_rgba(31,38,135,0.07)]",
+      "padding": "p-8"
+    },
+
+    "icons": {
+      "container": {
+        "size": "w-12 h-12",
+        "radius": "rounded-xl",
+        "display": "flex items-center justify-center"
+      }
+    },
+
+    "navbar": {
+      "base": "fixed top-0 w-full z-50",
+      "background": "bg-white/60 backdrop-blur-lg",
+      "border": "border-b border-white/40",
+      "shadow": "shadow-sm"
+    },
+
+    "gradients": {
+      "brand_text": "bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent",
+      "logo": "bg-gradient-to-br from-emerald-500 to-teal-700",
+      "icon_blue": "bg-gradient-to-br from-blue-500 to-cyan-500",
+      "icon_orange": "bg-gradient-to-br from-orange-500 to-amber-500",
+      "icon_pink": "bg-gradient-to-br from-pink-500 to-rose-500",
+      "icon_purple": "bg-gradient-to-br from-purple-500 to-indigo-500"
+    },
+
+    "motion": {
+      "library": "framer-motion",
+      "philosophy": "very subtle, minimal movement, fast transitions",
+
+      "transition": {
+        "duration_fast": 0.2,
+        "duration_normal": 0.35,
+        "duration_slow": 0.6,
+        "ease": "easeOut"
+      },
+
+      "variants": {
+        "fade_in": {
+          "initial": { "opacity": 0 },
+          "animate": { "opacity": 1 },
+          "transition": { "duration": 0.35 }
+        },
+
+        "fade_up": {
+          "initial": {
+            "opacity": 0,
+            "y": 12
+          },
+          "animate": {
+            "opacity": 1,
+            "y": 0
+          },
+          "transition": {
+            "duration": 0.35,
+            "ease": "easeOut"
+          }
+        },
+
+        "fade_down": {
+          "initial": {
+            "opacity": 0,
+            "y": -12
+          },
+          "animate": {
+            "opacity": 1,
+            "y": 0
+          },
+          "transition": {
+            "duration": 0.35
+          }
+        },
+
+        "scale_in": {
+          "initial": {
+            "opacity": 0,
+            "scale": 0.96
+          },
+          "animate": {
+            "opacity": 1,
+            "scale": 1
+          },
+          "transition": {
+            "duration": 0.3
+          }
+        },
+
+        "card_hover": {
+          "whileHover": {
+            "y": -6,
+            "scale": 1.01
+          },
+          "transition": {
+            "duration": 0.2
+          }
+        },
+
+        "button_tap": {
+          "whileTap": {
+            "scale": 0.96
+          }
+        }
+      },
+
+      "stagger": {
+        "container": {
+          "animate": {
+            "transition": {
+              "staggerChildren": 0.08
+            }
+          }
+        }
+      },
+
+      "recommended_usage": {
+        "sections": "fade_up",
+        "cards": "scale_in",
+        "hero_content": "fade_up",
+        "feature_grid": "stagger container",
+        "buttons": "button_tap",
+        "hover_cards": "card_hover"
+      }
+    },
+
+    "spacing": {
+      "section_gap": "gap-16",
+      "card_gap": "gap-8",
+      "large_margin": "mb-24"
     }
-  },
-
-  "responsive_classes": {
-    "hero_grid":        "grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-12",
-    "stats_grid":       "grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200",
-    "features_grid":    "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5",
-    "process_grid":     "grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12",
-    "testimonials_grid":"grid grid-cols-1 md:grid-cols-3 gap-5",
-    "footer_grid":      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10",
-    "hide_on_mobile":   "hidden lg:flex",
-    "show_on_mobile":   "flex lg:hidden"
-  },
-
-  "copywriting_patterns": {
-    "hero_headline":    "Bold claim line + italic accent line below. e.g. 'File taxes' + italic 'without stress.'",
-    "eyebrow":          "SCREAMING SNAKE CASE, max 4 words. e.g. 'CAPABILITIES', 'SOCIAL PROOF', 'PROCESS'",
-    "stat":             "Number + short uppercase label. Currency uses ₦ symbol for Nigerian context.",
-    "feature_title":    "2-3 word noun phrase. e.g. 'Smart Tax Calculator'",
-    "process_step":     "Imperative verb phrase. e.g. 'Add your numbers'",
-    "testimonial":      "Problem → relief arc. First person. Specific detail + location attribution.",
-    "cta_banner":       "Aspirational framing. 'Join the future of [category].' Never feature-led."
-  },
-
-  "ai_replication_guide": {
-    "cursor_instruction": "Reference this file as context. Follow the tailwind_config section first to set up tokens. Then use layout_classes for structure, shadcn_components for UI primitives, and animation.reusable_components for scroll effects.",
-    "setup_order": [
-      "1. Run: npx create-next-app@latest --typescript --tailwind --app",
-      "2. Run: npx shadcn@latest init — accept defaults, set primary color to #1E4D35",
-      "3. Paste globals_css :root values from tailwind_config.globals_css",
-      "4. Extend tailwind.config.ts with all values from tailwind_config.config",
-      "5. Install framer-motion: npm install framer-motion",
-      "6. Create ScrollReveal and StaggerGrid components from animation.reusable_components",
-      "7. Build sections top-to-bottom following page_structure order",
-      "8. Apply layout_classes to each section wrapper",
-      "9. Use shadcn_components for all interactive UI (Button, Card, Badge, Avatar)",
-      "10. Apply section_animation_map variants using whileInView with scroll_trigger_config viewport"
-    ],
-    "what_makes_it_distinct": [
-      "Hero headline italic accent line — <span className='italic text-accent'>without stress.</span>",
-      "Naira widget in hero right column — product tangibility in local currency",
-      "bg-primary-dark Card breaking the features grid for enterprise upsell",
-      "Step numbers: text-5xl font-extrabold text-accent opacity-25",
-      "Consistent 'Learn more →' ArrowRight icon links on all feature cards",
-      "Trust micro-copy below CTA button: text-xs text-white/50"
-    ]
   }
 }
