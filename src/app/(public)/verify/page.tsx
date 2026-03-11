@@ -80,7 +80,7 @@ function VerificationPreviewCard({
             {
               icon: <Link2 className="h-4 w-4 shrink-0 text-emerald-200" />,
               title: "Click the link",
-              desc: "The link is valid for 24 hours after it was sent.",
+              desc: "The link is valid for only 24 hours after it was sent.",
             },
             {
               icon: <Zap className="h-4 w-4 shrink-0 text-emerald-200" />,
