@@ -28,7 +28,7 @@ RUN SKIP_ENV_VALIDATION=1 npm run build
 
 ##### RUNNER
 
-FROM --platform=linux/amd64 gcr.io/distroless/nodejs20-debian12 AS runner
+FROM --platform=linux/amd64 node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
@@ -45,7 +45,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Install Prisma 6 globally for migrations
+RUN npm install -g prisma@6.19.2
+
+RUN prisma migrate deploy
+
 EXPOSE 3000
 ENV PORT 3000
 
-CMD ["server.js"]
+CMD ["node", "server.js"]

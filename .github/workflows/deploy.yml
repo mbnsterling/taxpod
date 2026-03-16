@@ -37,12 +37,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push production image
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           push: true
+          target: runner
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
@@ -52,15 +53,25 @@ jobs:
             NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
           provenance: false
 
-      - name: Verify image was pushed
+      - name: Build and push migrator image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          target: migrator
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:migrate
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Verify images were pushed
         run: |
-          echo "Verifying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ..."
-          if docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest; then
-            echo "Image verified successfully"
-          else
-            echo "Image not found in registry — aborting"
-            exit 1
-          fi
+          echo "Verifying production image ..."
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          echo "Verifying migrator image ..."
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:migrate
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0
@@ -101,14 +112,16 @@ jobs:
             fi
 
             # ── Migrations ──────────────────────────────────────────────────────
-            # The runner image is distroless (entrypoint = node, no shell).
-            # We cannot use node_modules/.bin/prisma (it is a shell script wrapper)
-            # and we must NOT prefix with "node" (distroless already provides it
-            # as the entrypoint, so adding it would pass "node" as a script path).
-            # Targeting the JS entry point directly resolves to:
-            #   node node_modules/prisma/build/index.js migrate deploy
+            # The production image is distroless (no shell, no npx, node is the
+            # entrypoint). Migrations are run using a dedicated node:20-alpine
+            # migrator image that has a shell and the Prisma CLI available.
+            # This runs BEFORE starting the app so a failed migration aborts
+            # the deployment and leaves the database schema untouched.
+            echo "Pulling migrator image ..."
+            docker pull "$IMAGE:migrate"
+
             echo "Running database migrations ..."
-            if docker compose run --rm app node_modules/prisma/build/index.js migrate deploy; then
+            if docker run --rm --env-file .env.production "$IMAGE:migrate"; then
               echo "Migrations completed successfully"
             else
               MIGRATION_EXIT=$?
