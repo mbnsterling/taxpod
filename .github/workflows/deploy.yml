@@ -86,15 +86,15 @@ jobs:
           key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
           script: mkdir -p /var/www/taxpod/deploy/nginx/conf.d /var/www/taxpod/data/certbot/conf /var/www/taxpod/data/certbot/www
 
-      - name: Copy config files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DO_SSH_HOST }}
-          username: ${{ secrets.DO_SSH_USER }}
-          key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
-          source: "docker-compose.yml,deploy/nginx/conf.d/default.conf"
-          target: /var/www/taxpod/
-          overwrite: true
+      # - name: Copy config files to server
+      #   uses: appleboy/scp-action@v0.1.7
+      #   with:
+      #     host: ${{ secrets.DO_SSH_HOST }}
+      #     username: ${{ secrets.DO_SSH_USER }}
+      #     key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+      #     source: "docker-compose.yml,deploy/nginx/conf.d/default.conf"
+      #     target: /var/www/taxpod/
+      #     overwrite: true
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0
