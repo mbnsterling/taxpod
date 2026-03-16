@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -155,11 +156,18 @@ function DashboardPreviewCard() {
   );
 }
 
+const UNVERIFIED_ERROR = "Please verify your email before signing in.";
+
 export default function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
   const [formError, setFormError] = useState<string | null>(null);
+  const [isUnverified, setIsUnverified] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string>("");
+  const [resendStatus, setResendStatus] = useState<
+    "idle" | "loading" | "sent" | "error"
+  >("idle");
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -173,6 +181,9 @@ export default function LoginPageClient() {
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
+    setIsUnverified(false);
+    setResendStatus("idle");
+
     const result = await signIn("credentials", {
       redirect: false,
       email: values.email,
@@ -181,12 +192,41 @@ export default function LoginPageClient() {
     });
 
     if (result?.error) {
-      setFormError(result.error);
+      if (result.error === UNVERIFIED_ERROR) {
+        setSubmittedEmail(values.email);
+        setIsUnverified(true);
+        toast.error("Email not verified — check your inbox.");
+      } else {
+        setFormError(result.error);
+        toast.error(result.error);
+      }
       return;
     }
 
     router.push(result?.url ?? callbackUrl);
   });
+
+  async function handleResend() {
+    setResendStatus("loading");
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: submittedEmail }),
+      });
+      if (res.ok) {
+        setResendStatus("sent");
+        toast.success("Verification email sent! Check your inbox.");
+      } else {
+        const data = (await res.json()) as { error?: string };
+        setResendStatus("error");
+        toast.error(data?.error ?? "Failed to resend. Please try again.");
+      }
+    } catch {
+      setResendStatus("error");
+      toast.error("Something went wrong. Please try again.");
+    }
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -203,7 +243,34 @@ export default function LoginPageClient() {
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5">
-            {formError ? (
+            {isUnverified ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                <p className="font-semibold">Email not verified</p>
+                <p className="mt-0.5">
+                  Your email address hasn&apos;t been verified yet. Check your
+                  inbox for the verification link, or request a new one.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={
+                    resendStatus === "loading" || resendStatus === "sent"
+                  }
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-700 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-amber-800 disabled:opacity-60"
+                >
+                  {resendStatus === "loading"
+                    ? "Sending…"
+                    : resendStatus === "sent"
+                      ? "Email sent!"
+                      : "Resend verification email"}
+                </button>
+                {resendStatus === "error" ? (
+                  <p className="mt-1.5 text-[11px] text-red-700">
+                    Failed to send. Please try again.
+                  </p>
+                ) : null}
+              </div>
+            ) : formError ? (
               <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                 {formError}
               </div>

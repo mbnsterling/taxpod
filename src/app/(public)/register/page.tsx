@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const registerSchema = z
   .object({
@@ -162,13 +163,12 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data?.fieldErrors?.email?.[0]) {
-          setFormError(data.fieldErrors.email[0]);
-        } else if (data?.error) {
-          setFormError(data.error);
-        } else {
-          setFormError("Unable to create account. Please try again.");
-        }
+        const errorMsg =
+          data?.fieldErrors?.email?.[0] ??
+          data?.error ??
+          "Unable to create account. Please try again.";
+        setFormError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
 
@@ -178,7 +178,9 @@ export default function RegisterPage() {
       );
     } catch (error) {
       console.error(error);
-      setFormError("Something went wrong. Please try again.");
+      const errorMsg = "Something went wrong. Please try again.";
+      setFormError(errorMsg);
+      toast.error(errorMsg);
     }
   });
 

@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "TaxEase – File Nigerian Taxes Without Stress",
@@ -24,7 +25,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={jakarta.variable}>
       <body className="bg-[#f8fafc] text-slate-900 font-sans transition-colors duration-700 selection:bg-emerald-500 selection:text-white">
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </TRPCReactProvider>
       </body>
     </html>
   );
