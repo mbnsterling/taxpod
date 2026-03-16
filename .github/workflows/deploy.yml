@@ -142,7 +142,9 @@ jobs:
             fi
 
             # ── Restart ──────────────────────────────────────────────────────────
-            docker compose up -d --remove-orphans
+            # --force-recreate ensures Docker always creates a fresh container
+            # from the newly pulled image rather than reusing a stopped one.
+            docker compose up -d --force-recreate --remove-orphans
 
             # Brief log snapshot after restart
             echo "Container status:"
@@ -161,29 +163,16 @@ jobs:
               exit 1
             fi
 
-            # ── HTTP health check ────────────────────────────────────────────────
-            # echo "Waiting for application to become healthy ..."
-            # HEALTH_URL="https://taxpod.ng/api/health"
-            # MAX_RETRIES=12
-            # RETRY_INTERVAL=10
+            # ── Reload nginx ─────────────────────────────────────────────────────
+            # The app container gets a new internal IP on every recreate. Nginx
+            # caches the old address in its upstream pool and will return 502
+            # until it is restarted and re-resolves the container hostname.
+            echo "Restarting nginx to reconnect to new app container ..."
+            docker compose restart nginx
 
-            # for i in $(seq 1 $MAX_RETRIES); do
-            #   STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 10 "$HEALTH_URL" || true)
-            #   if [ "$STATUS" = "200" ]; then
-            #     echo "Health check passed (attempt $i)"
-            #     break
-            #   fi
-            #   echo "Attempt $i/$MAX_RETRIES — got HTTP $STATUS, retrying in ${RETRY_INTERVAL}s ..."
-            #   if [ "$i" -eq "$MAX_RETRIES" ]; then
-            #     echo "Health check failed after $MAX_RETRIES attempts — check application logs"
-            #     docker compose logs --tail=50 app
-            #     exit 1
-            #   fi
-            #   sleep "$RETRY_INTERVAL"
-            # done
-
-            # Final cleanup of images no longer referenced by any container
-            docker image prune -f
+            # ── Prune unused Docker resources ────────────────────────────────────
+            echo "Pruning unused Docker resources ..."
+            docker system prune -af
 
             echo "Production deployment completed successfully!"
 
