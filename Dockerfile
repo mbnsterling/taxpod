@@ -15,11 +15,14 @@ RUN npm ci
 
 FROM --platform=linux/amd64 node:20-alpine AS builder
 ARG DATABASE_URL
+ARG NEXT_PUBLIC_APP_URL
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+RUN npx prisma@6.19.2 generate
 
 RUN SKIP_ENV_VALIDATION=1 npm run build
 

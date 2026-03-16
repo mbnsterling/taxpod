@@ -1,0 +1,59 @@
+---
+description: Enforce Suspense-wrapped client components when using useSearchParams in app router pages
+globs: src/app/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# Next.js `useSearchParams` + Suspense Rule
+
+When working in the app router, any component that calls `useSearchParams` from `next/navigation` **must not** be a top-level page/server component. Instead:
+
+- **Pattern to follow**
+  - Create a dedicated **client component** file (first line `"use client";`) that:
+    - imports and uses `useSearchParams`, `useRouter`, `useState`, `useEffect`, etc.
+    - contains all interactive UI and hooks.
+  - In the corresponding `page.tsx`:
+    - Keep it as a **server component** (no `"use client"` and no React hooks).
+    - Import the client component.
+    - Wrap the client component in `<Suspense>` when rendering.
+
+## Required structure
+
+**Client component (example: `LoginPageClient.tsx`):**
+
+```tsx
+"use client";
+
+import { useSearchParams, useRouter } from "next/navigation";
+// ...other client-only imports
+
+export default function LoginPageClient() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  // ...rest of the interactive logic and JSX
+}
+```
+
+**Page file (example: `src/app/(public)/login/page.tsx`):**
+
+```tsx
+import { Suspense } from "react";
+import LoginPageClient from "./LoginPageClient";
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageClient />
+    </Suspense>
+  );
+}
+```
+
+## Things to avoid
+
+- **Do NOT** call `useSearchParams` directly in `page.tsx` (even if it’s marked `"use client"`).
+- **Do NOT** import React client hooks (`useState`, `useEffect`, `useRouter`, `useSearchParams`) into server components.
+- **Do NOT** forget the `<Suspense>` wrapper around the client component when it uses `useSearchParams`.
+
+Following this rule prevents the `useSearchParams() should be wrapped in a suspense boundary` build error on new pages. 
+
