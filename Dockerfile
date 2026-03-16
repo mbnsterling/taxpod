@@ -30,6 +30,12 @@ FROM --platform=linux/amd64 node:20-alpine AS migrator
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
+ARG DATABASE_URL
+ARG DIRECT_URL
+
+ENV DATABASE_URL=$DATABASE_URL
+ENV DIRECT_URL=$DIRECT_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY prisma ./prisma
 
