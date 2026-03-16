@@ -78,7 +78,7 @@ jobs:
             OWNER="${{ github.repository_owner }}"
 
             # Authenticate to GHCR using the workflow's GITHUB_TOKEN.
-            # All ${{ }} expressions are resolved on the Actions runner before
+            # All expressions are resolved on the Actions runner before
             # the script is sent over SSH, so the token value arrives as a
             # plain string. Writing directly to docker config avoids docker
             # login TTY requirements in non-interactive SSH sessions.
