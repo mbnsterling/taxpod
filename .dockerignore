@@ -9,4 +9,3 @@ README.md
 .git
 .gitignore
 generated
-prisma/migrations

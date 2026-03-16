@@ -120,12 +120,14 @@ jobs:
             echo "Pulling migrator image ..."
             docker pull "$IMAGE:migrate"
 
-            # docker --env-file does NOT strip surrounding quotes from values.
-            # If .env.production has DATABASE_URL="postgresql://...", Docker
-            # passes the literal quoted string, causing Prisma's P1012 error.
-            # Extract and unquote both required Prisma datasource vars via shell.
-            DB_URL=$(grep '^DATABASE_URL=' .env.production | cut -d'=' -f2- | sed "s/^['\"]//;s/['\"]$//")
-            DIRECT_URL=$(grep '^DIRECT_URL=' .env.production | cut -d'=' -f2- | sed "s/^['\"]//;s/['\"]$//")
+            # docker --env-file does NOT strip surrounding quotes from values —
+            # extract and unquote each variable explicitly via shell.
+            # grep exits 1 when a key is absent; || true prevents set -e from
+            # aborting the script. DIRECT_URL falls back to DATABASE_URL when
+            # not present (safe for non-pooled connections).
+            _unquote() { sed "s/^['\"]//;s/['\"]$//"; }
+            DB_URL=$(grep '^DATABASE_URL=' .env.production | cut -d'=' -f2- | _unquote)
+            DIRECT_URL=$(grep '^DIRECT_URL=' .env.production 2>/dev/null | cut -d'=' -f2- | _unquote || echo "$DB_URL")
 
             echo "Running database migrations ..."
             if docker run --rm \
