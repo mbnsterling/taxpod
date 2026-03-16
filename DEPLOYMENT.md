@@ -22,11 +22,12 @@ GitHub repo (push to main)
 
 Add the following secrets to your GitHub repository under **Settings → Secrets and variables → Actions**:
 
-| Secret name          | Value                                        |
-|----------------------|----------------------------------------------|
-| `DO_SSH_HOST`        | Droplet public IP address                    |
-| `DO_SSH_USER`        | SSH user on droplet (e.g. `root` or `deploy`)|
-| `DO_SSH_PRIVATE_KEY` | Private SSH key that can authenticate to the droplet |
+| Secret name          | Value                                                 |
+|----------------------|-------------------------------------------------------|
+| `DO_SSH_HOST`        | Droplet public IP address                             |
+| `DO_SSH_USER`        | SSH user on droplet (e.g. `root` or `deploy`)         |
+| `DO_SSH_PRIVATE_KEY` | Private SSH key that can authenticate to the droplet  |
+| `GHCR_READ_TOKEN`    | GitHub PAT with `read:packages` for `mbnsterling`     |
 
 No production application secrets (database URL, SMTP passwords, etc.) are stored in GitHub. They live only on the droplet.
 
@@ -187,9 +188,8 @@ Add this line:
 
 2. **Deploy job** runs only on pushes to `main` after CI passes:
    - SSHes into the droplet using `DO_SSH_PRIVATE_KEY`
-   - Ensures `/var/www/taxpod` exists and is a git clone of `github.com/mbnsterling/taxpod`
-   - Pulls the latest code with `git pull`
-   - Runs `docker compose pull` so the droplet fetches the latest `ghcr.io/taxpod/taxpod:latest` image and updated nginx/certbot images
+   - Logs in to GHCR on the droplet using `GHCR_READ_TOKEN`
+   - Runs `docker compose pull` so the droplet fetches the latest `ghcr.io/mbnsterling/taxpod:latest` image and updated nginx/certbot images
    - Runs Prisma migrations inside the app container using production env: `docker compose run --rm app node node_modules/.bin/prisma migrate deploy`
    - Runs `docker compose up -d --remove-orphans` to restart updated containers
    - Prunes dangling images to free disk space

@@ -67,6 +67,9 @@ jobs:
           host: ${{ secrets.DO_SSH_HOST }}
           username: ${{ secrets.DO_SSH_USER }}
           key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+        env:
+          GHCR_USERNAME: ${{ github.repository_owner }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
           script: |
             set -e
 
@@ -121,6 +124,9 @@ jobs:
                   }
               }
               EOF
+
+            # Log in to GitHub Container Registry on the droplet so it can pull private images
+            echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
 
             # Pull latest images (app from GHCR, nginx/certbot from Docker Hub)
             docker compose pull
