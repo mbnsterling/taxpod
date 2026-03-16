@@ -13,6 +13,11 @@ export const env = createEnv({
         : z.string().optional(),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
+    // AWS SES SDK (production) — uses HTTPS/443, immune to SMTP port blocks
+    AWS_REGION: z.string().optional(),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    // SMTP fallback (development / non-AWS environments)
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.string().optional(),
     SMTP_USER: z.string().optional(),
@@ -43,6 +48,9 @@ export const env = createEnv({
     AUTH_SECRET: process.env.AUTH_SECRET,
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,
     SMTP_USER: process.env.SMTP_USER,

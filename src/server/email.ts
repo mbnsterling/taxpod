@@ -1,52 +1,66 @@
+import { SESClient, SendRawEmailCommand } from "@aws-sdk/client-ses";
 import nodemailer from "nodemailer";
 import { env } from "~/env";
 
-const smtpHost = env.SMTP_HOST;
-const smtpPort = env.SMTP_PORT ? Number(env.SMTP_PORT) : undefined;
-const smtpUser = env.SMTP_USER;
-const smtpPass = env.SMTP_PASS;
-const smtpFrom = env.SMTP_FROM ?? "no-reply@taxpod.ng";
+const emailFrom = env.SMTP_FROM ?? "no-reply@taxpod.ng";
 
-if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-  // In dev we allow missing SMTP and simply log instead of throwing on import.
-  // Individual send functions will fallback to console logging when transporter cannot be created.
-  console.warn(
-    "[email] SMTP configuration is incomplete. Emails will be logged to console.",
-  );
-} else {
-  // Log SMTP config on startup (no credentials) so connection issues surface
-  // immediately in docker logs rather than only at the point of first send.
-  console.info(
-    `[email] SMTP configured — host=${smtpHost} port=${smtpPort} secure=${smtpPort === 465} requireTLS=${smtpPort === 587}`,
-  );
-}
+// ── Transport selection ──────────────────────────────────────────────────────
+// Priority 1: AWS SES SDK — communicates over HTTPS (port 443). Immune to the
+//             SMTP port blocks that DigitalOcean and other cloud providers
+//             apply to outbound ports 25 / 465 / 587.
+// Priority 2: SMTP — kept for local development (e.g. Mailtrap sandbox).
+// Priority 3: Console log — when neither is configured.
 
 function createTransport() {
-  if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-    return null;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const awsRegion = env.AWS_REGION;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const awsKeyId = env.AWS_ACCESS_KEY_ID;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const awsSecret = env.AWS_SECRET_ACCESS_KEY;
+
+  if (awsRegion && awsKeyId && awsSecret) {
+    console.info(`[email] Using AWS SES SDK — region=${awsRegion} from=${emailFrom}`);
+
+    const ses = new SESClient({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      region: awsRegion,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      credentials: { accessKeyId: awsKeyId, secretAccessKey: awsSecret },
+    });
+
+    // nodemailer v6 types don't declare the SES transport option but it IS
+    // a fully supported runtime feature — see https://nodemailer.com/transports/ses/
+    return nodemailer.createTransport(
+      { SES: { ses, aws: { SendRawEmailCommand } } } as unknown as nodemailer.TransportOptions,
+    );
   }
 
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    // port 465 → immediate TLS; port 587 → plain SMTP upgraded via STARTTLS
-    secure: smtpPort === 465,
-    // AWS SES (and most modern SMTP servers) require TLS on port 587.
-    // Without requireTLS the STARTTLS negotiation can stall → ETIMEDOUT.
-    requireTLS: smtpPort === 587,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-    tls: {
-      // Explicitly send the SNI hostname so the server presents the correct
-      // certificate — important for multi-tenant SMTP endpoints like AWS SES.
-      servername: smtpHost,
-    },
-    connectionTimeout: 15_000,
-    greetingTimeout: 15_000,
-    socketTimeout: 20_000,
-  });
+  const smtpHost = env.SMTP_HOST;
+  const smtpPort = env.SMTP_PORT ? Number(env.SMTP_PORT) : undefined;
+  const smtpUser = env.SMTP_USER;
+  const smtpPass = env.SMTP_PASS;
+
+  if (smtpHost && smtpPort && smtpUser && smtpPass) {
+    console.info(
+      `[email] Using SMTP — host=${smtpHost} port=${smtpPort} secure=${smtpPort === 465}`,
+    );
+
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      requireTLS: smtpPort === 587,
+      auth: { user: smtpUser, pass: smtpPass },
+      tls: { servername: smtpHost },
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 20_000,
+    });
+  }
+
+  console.warn("[email] No email transport configured. Emails will be logged to console.");
+  return null;
 }
 
 type SendEmailOptions = {
@@ -59,16 +73,13 @@ export async function sendEmail(options: SendEmailOptions) {
   const transporter = createTransport();
 
   if (!transporter) {
-    console.info("[email] Would send email:", {
-      from: smtpFrom,
-      ...options,
-    });
+    console.info("[email] Would send email:", { from: emailFrom, ...options });
     return;
   }
 
   try {
     await transporter.sendMail({
-      from: smtpFrom,
+      from: emailFrom,
       to: options.to,
       subject: options.subject,
       html: options.html,
