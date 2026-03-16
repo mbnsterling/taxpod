@@ -101,10 +101,14 @@ jobs:
             fi
 
             # ── Migrations ──────────────────────────────────────────────────────
-            # Run in the app container (distroless image; must use node directly)
-            # Runs BEFORE starting the app so a failed migration aborts deployment
+            # The runner image is distroless (entrypoint = node, no shell).
+            # We cannot use node_modules/.bin/prisma (it is a shell script wrapper)
+            # and we must NOT prefix with "node" (distroless already provides it
+            # as the entrypoint, so adding it would pass "node" as a script path).
+            # Targeting the JS entry point directly resolves to:
+            #   node node_modules/prisma/build/index.js migrate deploy
             echo "Running database migrations ..."
-            if docker compose run --rm app node node_modules/.bin/prisma migrate deploy; then
+            if docker compose run --rm app node_modules/prisma/build/index.js migrate deploy; then
               echo "Migrations completed successfully"
             else
               MIGRATION_EXIT=$?

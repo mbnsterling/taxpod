@@ -206,7 +206,8 @@ Every push to `main` triggers the `CI / Deploy` workflow, which runs as a single
    - Stops the `app` container to free memory
    - Prunes stopped containers and dangling images
    - Pulls `ghcr.io/mbnsterling/taxpod:latest`
-   - Runs Prisma migrations via `docker compose run --rm app node node_modules/.bin/prisma migrate deploy`
+   - Runs Prisma migrations via `docker compose run --rm app node_modules/prisma/build/index.js migrate deploy`
+     - The runner image is distroless (entrypoint = `node`, no shell); the JS entry point is targeted directly
      - If migrations fail, deployment is aborted before the app is restarted
    - Starts the updated stack: `docker compose up -d --remove-orphans`
    - Prints container status and the last 20 log lines
@@ -249,7 +250,7 @@ docker pull ghcr.io/mbnsterling/taxpod:<sha>
 # Update the running container to use the old image
 docker compose stop app
 docker run --rm --env-file .env.production ghcr.io/mbnsterling/taxpod:<sha> \
-  node node_modules/.bin/prisma migrate deploy || true
+  node_modules/prisma/build/index.js migrate deploy || true
 IMAGE=ghcr.io/mbnsterling/taxpod:<sha> docker compose up -d app
 ```
 
