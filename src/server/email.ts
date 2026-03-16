@@ -28,6 +28,9 @@ function createTransport() {
       user: smtpUser,
       pass: smtpPass,
     },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   });
 }
 
@@ -48,12 +51,17 @@ export async function sendEmail(options: SendEmailOptions) {
     return;
   }
 
-  await transporter.sendMail({
-    from: smtpFrom,
-    to: options.to,
-    subject: options.subject,
-    html: options.html,
-  });
+  try {
+    await transporter.sendMail({
+      from: smtpFrom,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+  } catch (err) {
+    console.error("[email] Failed to send email to", options.to, err);
+    throw err;
+  }
 }
 
 export function buildVerificationEmail(options: {

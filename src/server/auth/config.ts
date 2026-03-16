@@ -29,6 +29,7 @@ declare module "next-auth" {
 
 export const authConfig = {
   adapter: PrismaAdapter(db),
+  trustHost: true,
   session: {
     strategy: "jwt",
   },
