@@ -1,5 +1,4 @@
-"use client";
-
+import { Suspense } from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -155,7 +154,7 @@ function DashboardPreviewCard() {
   );
 }
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -358,5 +357,13 @@ export default function LoginPage() {
         <DashboardPreviewCard />
       </AuthRightPanel>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   );
 }
