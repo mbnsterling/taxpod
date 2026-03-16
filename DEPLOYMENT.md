@@ -8,12 +8,19 @@ This guide covers the one-time droplet setup, environment variable management, S
 
 ```
 GitHub repo (push to main)
-  └─► GitHub Actions CI (lint + typecheck + build + Docker image push)
-        └─► GitHub Actions Deploy (SSH into droplet)
-              └─► docker compose pull + up -d
-                    ├─ app         (Next.js, port 3000, internal only; image from GHCR)
-                    ├─ nginx       (ports 80/443, reverse proxy + SSL termination)
-                    └─ certbot     (Let's Encrypt certificate issuance/renewal)
+  └─► GitHub Actions CI/Deploy
+        ├─ Builds Docker image → pushed to GHCR (ghcr.io/mbnsterling/taxpod)
+        │    Tags: :latest and :<git-sha>
+        ├─ Verifies the image exists in GHCR
+        └─ SSHes into droplet
+              ├─ docker login ghcr.io (using GHCR_READ_TOKEN)
+              ├─ docker compose stop app (frees memory before pull)
+              ├─ docker pull ghcr.io/mbnsterling/taxpod:latest
+              ├─ Prisma migrations (temporary container, abort on failure)
+              ├─ docker compose up -d --remove-orphans
+              ├─ Container status + log snapshot
+              ├─ HTTP health check → https://taxpod.ng/api/health (12 × 10s retries)
+              └─ docker image prune -f
 ```
 
 ---
@@ -22,14 +29,15 @@ GitHub repo (push to main)
 
 Add the following secrets to your GitHub repository under **Settings → Secrets and variables → Actions**:
 
-| Secret name          | Value                                                 |
-|----------------------|-------------------------------------------------------|
-| `DO_SSH_HOST`        | Droplet public IP address                             |
-| `DO_SSH_USER`        | SSH user on droplet (e.g. `root` or `deploy`)         |
-| `DO_SSH_PRIVATE_KEY` | Private SSH key that can authenticate to the droplet  |
-| `GHCR_READ_TOKEN`    | GitHub PAT with `read:packages` for `mbnsterling`     |
+| Secret name          | Value                                                                   |
+|----------------------|-------------------------------------------------------------------------|
+| `DO_SSH_HOST`        | Droplet public IP address                                               |
+| `DO_SSH_USER`        | SSH user on droplet (e.g. `root` or `deploy`)                           |
+| `DO_SSH_PRIVATE_KEY` | Private SSH key that can authenticate to the droplet                    |
+| `GHCR_READ_TOKEN`    | GitHub PAT with `read:packages` scope for `mbnsterling`                 |
+| `NEXT_PUBLIC_APP_URL`| Production app URL baked into the Docker image at build time            |
 
-No production application secrets (database URL, SMTP passwords, etc.) are stored in GitHub. They live only on the droplet.
+No production application secrets (database URL, SMTP passwords, etc.) are stored in GitHub. They live only on the droplet in `.env.production`.
 
 ---
 
@@ -111,7 +119,7 @@ mkdir -p /var/www/taxpod/data/certbot/conf
 mkdir -p /var/www/taxpod/data/certbot/www
 ```
 
-### 2f. Generate temporary self‑signed certificates (first‑time only)
+### 2f. Generate temporary self-signed certificates (first-time only)
 
 Nginx is configured to look for certificates at:
 
@@ -122,7 +130,7 @@ These paths are mounted from the host via:
 
 - `/var/www/taxpod/data/certbot/conf:/etc/letsencrypt`
 
-Before the first real Let’s Encrypt certificate is issued, generate a short‑lived self‑signed certificate so that Nginx can start cleanly on the very first deploy:
+Before the first real Let's Encrypt certificate is issued, generate a short-lived self-signed certificate so that Nginx can start cleanly on the very first deploy:
 
 ```bash
 mkdir -p /var/www/taxpod/data/certbot/conf/live/taxpod.ng
@@ -133,7 +141,7 @@ openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
   -subj "/CN=taxpod.ng"
 ```
 
-This certificate is **only for bootstrapping**; it will be replaced by a real Let’s Encrypt certificate in the next step.
+This certificate is **only for bootstrapping**; it will be replaced by a real Let's Encrypt certificate in the next step.
 
 ### 2g. Obtain the first real SSL certificate
 
@@ -177,40 +185,90 @@ Add this line:
 
 ## 4. How CI/CD works (automatic on push to main)
 
-1. **CI job** runs on every push and pull request:
-   - Installs npm dependencies
-   - Runs `npm run lint`
-   - Runs `npm run typecheck`
-   - Runs `SKIP_ENV_VALIDATION=1 npm run build` to verify the build succeeds
-   - Logs in to GitHub Container Registry (`ghcr.io`)
-   - Builds the Docker image using the repo `Dockerfile` and tags it as `ghcr.io/mbnsterling/taxpod:latest`
-   - Pushes the image to GHCR
+Every push to `main` triggers the `CI / Deploy` workflow, which runs as a single `build_and_deploy` job:
 
-2. **Deploy job** runs only on pushes to `main` after CI passes:
-   - SSHes into the droplet using `DO_SSH_PRIVATE_KEY`
-   - Logs in to GHCR on the droplet using `GHCR_READ_TOKEN`
-   - Runs `docker compose pull` so the droplet fetches the latest `ghcr.io/mbnsterling/taxpod:latest` image and updated nginx/certbot images
-   - Runs Prisma migrations inside the app container using production env: `docker compose run --rm app node node_modules/.bin/prisma migrate deploy`
-   - Runs `docker compose up -d --remove-orphans` to restart updated containers
-   - Prunes dangling images to free disk space
+1. **Checkout** — checks out the source at the commit SHA.
+
+2. **Buildx setup** — enables multi-platform builds and GitHub Actions layer cache (`cache-from/cache-to type=gha`) for faster subsequent builds.
+
+3. **GHCR login** — logs in using `GITHUB_TOKEN` (auto-scoped `write:packages`).
+
+4. **Build and push image** — builds for `linux/amd64` and pushes two tags:
+   - `ghcr.io/mbnsterling/taxpod:latest`
+   - `ghcr.io/mbnsterling/taxpod:<git-sha>`
+   
+   The SHA tag enables rollbacks (see section 6).
+
+5. **Image verification** — runs `docker buildx imagetools inspect` on the `:latest` tag. If the image cannot be found, the job fails immediately before attempting any server interaction.
+
+6. **Deploy via SSH** — SSHes into the droplet using `DO_SSH_PRIVATE_KEY` and executes the deployment script:
+   - Logs into GHCR using `GHCR_READ_TOKEN`
+   - Stops the `app` container to free memory
+   - Prunes stopped containers and dangling images
+   - Pulls `ghcr.io/mbnsterling/taxpod:latest`
+   - Runs Prisma migrations via `docker compose run --rm app node node_modules/.bin/prisma migrate deploy`
+     - If migrations fail, deployment is aborted before the app is restarted
+   - Starts the updated stack: `docker compose up -d --remove-orphans`
+   - Prints container status and the last 20 log lines
+   - Waits up to 2 minutes (12 × 10s retries) for `https://taxpod.ng/api/health` to return HTTP 200
+     - On failure, prints the last 50 app log lines and exits non-zero
+   - Prunes dangling images
+
+7. **Summary** — prints the deployment summary with the commit SHA for reference.
 
 ---
 
 ## 5. Managing environment variables
 
-| Variable scope                            | Where to manage                                  |
-|-------------------------------------------|--------------------------------------------------|
-| Production app secrets (DB, SMTP, auth)   | `/var/www/taxpod/.env.production` on droplet      |
-| Deployment access (SSH host/user/key)     | GitHub Secrets (`DO_SSH_HOST`, `DO_SSH_USER`, `DO_SSH_PRIVATE_KEY`) |
-| Local development                         | `.env` in repo root (never committed in full, template only) |
+| Variable scope                            | Where to manage                                                        |
+|-------------------------------------------|------------------------------------------------------------------------|
+| Production app secrets (DB, SMTP, auth)   | `/var/www/taxpod/.env.production` on droplet                           |
+| Deployment access (SSH host/user/key)     | GitHub Secrets (`DO_SSH_HOST`, `DO_SSH_USER`, `DO_SSH_PRIVATE_KEY`)    |
+| Registry read access on droplet           | GitHub Secrets (`GHCR_READ_TOKEN`) — PAT with `read:packages`          |
+| Build-time public vars                    | GitHub Secrets (`NEXT_PUBLIC_APP_URL`) — injected as Docker build args |
+| Local development                         | `.env` in repo root (template only, never committed with real values)  |
 
 - The `.env.production` file is **never committed** to git (listed in `.gitignore` and `.dockerignore`).
 - To rotate a secret, edit `.env.production` on the droplet and restart the app container: `docker compose up -d app`.
-- The Docker build does **not** receive any production secrets; all secrets are injected at runtime via `env_file`.
+- The Docker image contains **no production secrets**; all secrets are injected at runtime via `env_file`.
 
 ---
 
-## 6. Useful commands on the droplet
+## 6. Rolling back a deployment
+
+Because every push tags the image with its git SHA, rolling back is straightforward:
+
+```bash
+# On the droplet — replace <sha> with the commit SHA of the last known-good deploy
+ssh user@droplet
+cd /var/www/taxpod
+
+# Pull the old image by SHA
+docker pull ghcr.io/mbnsterling/taxpod:<sha>
+
+# Update the running container to use the old image
+docker compose stop app
+docker run --rm --env-file .env.production ghcr.io/mbnsterling/taxpod:<sha> \
+  node node_modules/.bin/prisma migrate deploy || true
+IMAGE=ghcr.io/mbnsterling/taxpod:<sha> docker compose up -d app
+```
+
+> Note: if the rollback SHA predates a migration, you will need to manually revert the database schema before running the old image.
+
+---
+
+## 7. Health check endpoint
+
+The app exposes `GET /api/health` which:
+- Runs `SELECT 1` against the database.
+- Returns `200 { "status": "ok", "db": "connected" }` on success.
+- Returns `503 { "status": "error", "db": "unreachable" }` if the DB is not reachable.
+
+This endpoint is used by the CI/CD health check loop and can also be used by external uptime monitors.
+
+---
+
+## 8. Useful commands on the droplet
 
 ```bash
 # View running containers
@@ -221,6 +279,9 @@ docker compose logs -f app
 
 # Restart only the app
 docker compose up -d app
+
+# Run a manual health check
+curl -s https://taxpod.ng/api/health | jq
 
 # Stop everything
 docker compose down

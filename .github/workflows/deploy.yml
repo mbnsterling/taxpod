@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/taxpod
+
 permissions:
   contents: read
   packages: write
@@ -17,10 +21,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug image info
+        run: |
+          echo "Repository owner : ${{ github.repository_owner }}"
+          echo "Full image        : ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "SHA tag           : ${{ github.sha }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -28,73 +41,26 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/taxpod:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
+          provenance: false
 
-      - name: Create nginx config
+      - name: Verify image was pushed
         run: |
-          mkdir -p deploy/nginx/conf.d
-          cat > deploy/nginx/conf.d/default.conf << 'EOF'
-          server {
-              listen 80;
-              server_name _;
-
-              location /.well-known/acme-challenge/ {
-                  root /var/www/certbot;
-              }
-
-              location / {
-                  return 301 https://$host$request_uri;
-              }
-          }
-
-          server {
-              listen 443 ssl;
-              server_name taxpod.ng www.taxpod.ng;
-
-              ssl_certificate     /etc/letsencrypt/live/taxpod.ng/fullchain.pem;
-              ssl_certificate_key /etc/letsencrypt/live/taxpod.ng/privkey.pem;
-
-              ssl_protocols TLSv1.2 TLSv1.3;
-              ssl_prefer_server_ciphers off;
-              ssl_session_cache shared:SSL:10m;
-              ssl_session_timeout 1d;
-              add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-
-              location / {
-                  proxy_pass         http://app:3000;
-                  proxy_http_version 1.1;
-                  proxy_set_header   Upgrade $http_upgrade;
-                  proxy_set_header   Connection 'upgrade';
-                  proxy_set_header   Host $host;
-                  proxy_set_header   X-Real-IP $remote_addr;
-                  proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header   X-Forwarded-Proto $scheme;
-                  proxy_cache_bypass $http_upgrade;
-                  proxy_read_timeout 90s;
-              }
-          }
-          EOF
-
-      - name: Ensure target directory exists on server
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.DO_SSH_HOST }}
-          username: ${{ secrets.DO_SSH_USER }}
-          key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
-          script: mkdir -p /var/www/taxpod/deploy/nginx/conf.d /var/www/taxpod/data/certbot/conf /var/www/taxpod/data/certbot/www
-
-      # - name: Copy config files to server
-      #   uses: appleboy/scp-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.DO_SSH_HOST }}
-      #     username: ${{ secrets.DO_SSH_USER }}
-      #     key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
-      #     source: "docker-compose.yml,deploy/nginx/conf.d/default.conf"
-      #     target: /var/www/taxpod/
-      #     overwrite: true
+          echo "Verifying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest ..."
+          if docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest; then
+            echo "Image verified successfully"
+          else
+            echo "Image not found in registry — aborting"
+            exit 1
+          fi
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0
@@ -103,21 +69,92 @@ jobs:
           username: ${{ secrets.DO_SSH_USER }}
           key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
           command_timeout: 20m
+          envs: GHCR_TOKEN,REGISTRY,IMAGE_NAME,GITHUB_SHA,REGISTRY_OWNER
           script: |
-            set -e
+            set -Eeuo pipefail
             cd /var/www/taxpod
 
-            # Log in to GHCR so the server can pull the image
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+            REGISTRY="${{ env.REGISTRY }}"
+            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+            OWNER="${{ github.repository_owner }}"
 
-            # Pull the freshly built image
-            docker compose pull
+            # Log into GHCR so docker compose pull can fetch private images
+            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login "$REGISTRY" -u "$OWNER" --password-stdin
 
-            # Run Prisma migrations
-            docker compose run --rm app node node_modules/.bin/prisma migrate deploy
+            # Stop only the app to free memory before pulling the new image
+            docker compose stop app
 
-            # Restart the stack
+            # Prune stopped containers and dangling images before pulling
+            docker container prune -f
+            docker image prune -f
+
+            # Pull the new image (and any updated nginx/certbot images)
+            echo "Pulling $IMAGE:latest ..."
+            if ! docker pull "$IMAGE:latest"; then
+              echo "Failed to pull image — aborting deployment"
+              exit 1
+            fi
+
+            # ── Migrations ──────────────────────────────────────────────────────
+            # Run in the app container (distroless image; must use node directly)
+            # Runs BEFORE starting the app so a failed migration aborts deployment
+            echo "Running database migrations ..."
+            if docker compose run --rm app node node_modules/.bin/prisma migrate deploy; then
+              echo "Migrations completed successfully"
+            else
+              MIGRATION_EXIT=$?
+              echo "ERROR: Migrations failed (exit $MIGRATION_EXIT) — aborting deployment"
+              exit "$MIGRATION_EXIT"
+            fi
+
+            # ── Restart ──────────────────────────────────────────────────────────
             docker compose up -d --remove-orphans
 
-            # Prune old images
+            # Brief log snapshot after restart
+            echo "Container status:"
+            docker compose ps app
+            echo "Recent app logs:"
+            docker compose logs --tail=20 app
+
+            # Wait for the container to stabilise
+            sleep 10
+
+            if docker compose ps app | grep -q "Up"; then
+              echo "Container is running"
+            else
+              echo "Container failed to start — check logs above"
+              docker compose logs --tail=50 app
+              exit 1
+            fi
+
+            # ── HTTP health check ────────────────────────────────────────────────
+            echo "Waiting for application to become healthy ..."
+            HEALTH_URL="https://taxpod.ng/api/health"
+            MAX_RETRIES=12
+            RETRY_INTERVAL=10
+
+            for i in $(seq 1 $MAX_RETRIES); do
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 10 "$HEALTH_URL" || true)
+              if [ "$STATUS" = "200" ]; then
+                echo "Health check passed (attempt $i)"
+                break
+              fi
+              echo "Attempt $i/$MAX_RETRIES — got HTTP $STATUS, retrying in ${RETRY_INTERVAL}s ..."
+              if [ "$i" -eq "$MAX_RETRIES" ]; then
+                echo "Health check failed after $MAX_RETRIES attempts — check application logs"
+                docker compose logs --tail=50 app
+                exit 1
+              fi
+              sleep "$RETRY_INTERVAL"
+            done
+
+            # Final cleanup of images no longer referenced by any container
             docker image prune -f
+
+            echo "Production deployment completed successfully!"
+
+      - name: Summarise deployment
+        run: |
+          echo "Deployment to production completed."
+          echo "Application: https://taxpod.ng"
+          echo "Image SHA  : ${{ github.sha }}"
