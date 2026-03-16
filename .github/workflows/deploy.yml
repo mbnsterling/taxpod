@@ -77,10 +77,12 @@ jobs:
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
             OWNER="${{ github.repository_owner }}"
 
-            # Log into GHCR so docker compose pull can fetch private images.
-            # Write credentials directly to avoid docker login TTY requirements
-            # in non-interactive SSH sessions.
-            GHCR_AUTH=$(printf '%s:%s' "$OWNER" "${{ secrets.GHCR_READ_TOKEN }}" | base64 -w0)
+            # Authenticate to GHCR using the workflow's GITHUB_TOKEN.
+            # All ${{ }} expressions are resolved on the Actions runner before
+            # the script is sent over SSH, so the token value arrives as a
+            # plain string. Writing directly to docker config avoids docker
+            # login TTY requirements in non-interactive SSH sessions.
+            GHCR_AUTH=$(printf '%s:%s' "${{ github.actor }}" "${{ secrets.GITHUB_TOKEN }}" | base64 -w0)
             mkdir -p ~/.docker
             printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$GHCR_AUTH" > ~/.docker/config.json
 

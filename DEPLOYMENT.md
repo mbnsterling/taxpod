@@ -34,7 +34,7 @@ Add the following secrets to your GitHub repository under **Settings → Secrets
 | `DO_SSH_HOST`        | Droplet public IP address                                               |
 | `DO_SSH_USER`        | SSH user on droplet (e.g. `root` or `deploy`)                           |
 | `DO_SSH_PRIVATE_KEY` | Private SSH key that can authenticate to the droplet                    |
-| `GHCR_READ_TOKEN`    | GitHub PAT with `read:packages` scope for `mbnsterling`                 |
+| ~~`GHCR_READ_TOKEN`~~| No longer needed — `GITHUB_TOKEN` is reused for server-side image pull |
 | `NEXT_PUBLIC_APP_URL`| Production app URL baked into the Docker image at build time            |
 
 No production application secrets (database URL, SMTP passwords, etc.) are stored in GitHub. They live only on the droplet in `.env.production`.
@@ -202,7 +202,7 @@ Every push to `main` triggers the `CI / Deploy` workflow, which runs as a single
 5. **Image verification** — runs `docker buildx imagetools inspect` on the `:latest` tag. If the image cannot be found, the job fails immediately before attempting any server interaction.
 
 6. **Deploy via SSH** — SSHes into the droplet using `DO_SSH_PRIVATE_KEY` and executes the deployment script:
-   - Logs into GHCR using `GHCR_READ_TOKEN`
+   - Logs into GHCR using the workflow's `GITHUB_TOKEN` (valid for the duration of the run)
    - Stops the `app` container to free memory
    - Prunes stopped containers and dangling images
    - Pulls `ghcr.io/mbnsterling/taxpod:latest`
@@ -224,7 +224,7 @@ Every push to `main` triggers the `CI / Deploy` workflow, which runs as a single
 |-------------------------------------------|------------------------------------------------------------------------|
 | Production app secrets (DB, SMTP, auth)   | `/var/www/taxpod/.env.production` on droplet                           |
 | Deployment access (SSH host/user/key)     | GitHub Secrets (`DO_SSH_HOST`, `DO_SSH_USER`, `DO_SSH_PRIVATE_KEY`)    |
-| Registry read access on droplet           | GitHub Secrets (`GHCR_READ_TOKEN`) — PAT with `read:packages`          |
+| Registry read access on droplet           | Reuses `GITHUB_TOKEN` from the workflow run — no additional secret needed |
 | Build-time public vars                    | GitHub Secrets (`NEXT_PUBLIC_APP_URL`) — injected as Docker build args |
 | Local development                         | `.env` in repo root (template only, never committed with real values)  |
 
