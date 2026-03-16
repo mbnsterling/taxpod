@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────────
@@ -130,12 +131,12 @@ model User {
     emailVerified DateTime?
     image         String?
 
-  // Credentials-based auth fields
-  passwordHash            String?
-  verificationToken       String?
-  verificationTokenExpires DateTime?
-  resetPasswordToken      String?
-  resetPasswordTokenExpires DateTime?
+    // Credentials-based auth fields
+    passwordHash              String?
+    verificationToken         String?
+    verificationTokenExpires  DateTime?
+    resetPasswordToken        String?
+    resetPasswordTokenExpires DateTime?
 
     accounts        Account[]
     sessions        Session[]
@@ -156,11 +157,11 @@ model VerificationToken {
 
 /// Central tax subject: represents both individuals and businesses.
 model Taxpayer {
-    id          String       @id @default(cuid())
-    type        TaxpayerType
-    displayName String
-    tin         String?      @unique
-    countryCode String       @default("NG")
+    id            String       @id @default(cuid())
+    type          TaxpayerType
+    displayName   String
+    tin           String?      @unique
+    countryCode   String       @default("NG")
     residentState String?
 
     // Small enterprise classification (NTA 2025: turnover ≤ ₦100m, fixed assets ≤ ₦250m)
@@ -206,8 +207,8 @@ model TaxpayerUser {
 
 /// Tracks individual income events with PIT and VAT attributes.
 model IncomeEntry {
-    id         String     @id @default(cuid())
-    taxpayerId String
+    id          String  @id @default(cuid())
+    taxpayerId  String
     taxReturnId String?
 
     taxYear     Int
@@ -266,16 +267,16 @@ model ExpenseEntry {
 
 /// Digital/virtual asset position for NTA 2025 CGT treatment.
 model DigitalAssetPosition {
-    id         String               @id @default(cuid())
-    taxpayerId String
-    capacity   DigitalAssetCapacity
+    id          String               @id @default(cuid())
+    taxpayerId  String
+    capacity    DigitalAssetCapacity
     assetSymbol String
 
     acquisitionDate  DateTime
-    acquisitionCost  Decimal  @db.Decimal(20, 2)
+    acquisitionCost  Decimal   @db.Decimal(20, 2)
     disposalDate     DateTime?
-    disposalProceeds Decimal? @db.Decimal(20, 2)
-    realisedGainLoss Decimal? @db.Decimal(20, 2)
+    disposalProceeds Decimal?  @db.Decimal(20, 2)
+    realisedGainLoss Decimal?  @db.Decimal(20, 2)
 
     taxpayer Taxpayer @relation(fields: [taxpayerId], references: [id], onDelete: Cascade)
 
