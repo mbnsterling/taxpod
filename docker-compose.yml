@@ -1,7 +1,7 @@
 services:
   app:
     platform: "linux/amd64"
-    image: ghcr.io/taxpod/taxpod:latest
+    image: ghcr.io/mbnsterling/taxpod:latest
     restart: unless-stopped
     env_file:
       - .env.production
