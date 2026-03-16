@@ -48,7 +48,7 @@ usermod -aG docker $USER
 
 ```bash
 mkdir -p /var/www
-git clone https://github.com/taxpod/taxpod.git /var/www/taxpod
+git clone https://github.com/mbnsterling/taxpod.git /var/www/taxpod
 cd /var/www/taxpod
 ```
 
@@ -182,11 +182,12 @@ Add this line:
    - Runs `npm run typecheck`
    - Runs `SKIP_ENV_VALIDATION=1 npm run build` to verify the build succeeds
    - Logs in to GitHub Container Registry (`ghcr.io`)
-   - Builds the Docker image using the repo `Dockerfile` and tags it as `ghcr.io/taxpod/taxpod:latest`
+   - Builds the Docker image using the repo `Dockerfile` and tags it as `ghcr.io/mbnsterling/taxpod:latest`
    - Pushes the image to GHCR
 
 2. **Deploy job** runs only on pushes to `main` after CI passes:
    - SSHes into the droplet using `DO_SSH_PRIVATE_KEY`
+   - Ensures `/var/www/taxpod` exists and is a git clone of `github.com/mbnsterling/taxpod`
    - Pulls the latest code with `git pull`
    - Runs `docker compose pull` so the droplet fetches the latest `ghcr.io/taxpod/taxpod:latest` image and updated nginx/certbot images
    - Runs Prisma migrations inside the app container using production env: `docker compose run --rm app node node_modules/.bin/prisma migrate deploy`
