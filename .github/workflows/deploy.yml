@@ -69,7 +69,6 @@ jobs:
           username: ${{ secrets.DO_SSH_USER }}
           key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
           command_timeout: 20m
-          envs: GHCR_TOKEN,REGISTRY,IMAGE_NAME,GITHUB_SHA,REGISTRY_OWNER
           script: |
             set -Eeuo pipefail
             cd /var/www/taxpod
@@ -78,8 +77,12 @@ jobs:
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
             OWNER="${{ github.repository_owner }}"
 
-            # Log into GHCR so docker compose pull can fetch private images
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login "$REGISTRY" -u "$OWNER" --password-stdin
+            # Log into GHCR so docker compose pull can fetch private images.
+            # Write credentials directly to avoid docker login TTY requirements
+            # in non-interactive SSH sessions.
+            GHCR_AUTH=$(printf '%s:%s' "$OWNER" "${{ secrets.GHCR_READ_TOKEN }}" | base64 -w0)
+            mkdir -p ~/.docker
+            printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$GHCR_AUTH" > ~/.docker/config.json
 
             # Stop only the app to free memory before pulling the new image
             docker compose stop app
