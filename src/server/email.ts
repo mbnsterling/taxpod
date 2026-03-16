@@ -13,6 +13,12 @@ if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
   console.warn(
     "[email] SMTP configuration is incomplete. Emails will be logged to console.",
   );
+} else {
+  // Log SMTP config on startup (no credentials) so connection issues surface
+  // immediately in docker logs rather than only at the point of first send.
+  console.info(
+    `[email] SMTP configured — host=${smtpHost} port=${smtpPort} secure=${smtpPort === 465} requireTLS=${smtpPort === 587}`,
+  );
 }
 
 function createTransport() {
@@ -23,14 +29,23 @@ function createTransport() {
   return nodemailer.createTransport({
     host: smtpHost,
     port: smtpPort,
+    // port 465 → immediate TLS; port 587 → plain SMTP upgraded via STARTTLS
     secure: smtpPort === 465,
+    // AWS SES (and most modern SMTP servers) require TLS on port 587.
+    // Without requireTLS the STARTTLS negotiation can stall → ETIMEDOUT.
+    requireTLS: smtpPort === 587,
     auth: {
       user: smtpUser,
       pass: smtpPass,
     },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
+    tls: {
+      // Explicitly send the SNI hostname so the server presents the correct
+      // certificate — important for multi-tenant SMTP endpoints like AWS SES.
+      servername: smtpHost,
+    },
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 20_000,
   });
 }
 
